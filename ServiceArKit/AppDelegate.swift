@@ -7,6 +7,7 @@
 
 import UIKit
 import SwiftUI
+import FirebaseCore
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -15,7 +16,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-
+        FirebaseApp.configure()
         // Create the SwiftUI view that provides the window contents.
         let contentView = ContentView()
 
@@ -24,6 +25,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window.rootViewController = UIHostingController(rootView: contentView)
         self.window = window
         window.makeKeyAndVisible()
+       
         return true
     }
 
@@ -47,3 +49,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 }
 
+struct ServiceArKit: App {
+  // register app delegate for Firebase setup
+  @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+
+
+  var body: some Scene {
+    WindowGroup {
+      NavigationView {
+        ContentView()
+              .preferredColorScheme(.light)
+              .onAppear {
+                  print("System Parameters:")
+                  print(Bundle.main.displayName)
+                  print(version)
+                  print(UIDevice.current.systemVersion)
+                  print(UIDevice.current.modelName)
+                  print(UIDevice.current.orientation.isLandscape)
+                  print(UIScreen.main.scale)
+                  print(UIScreen.main.nativeScale)
+                  print("Ширина \(UIScreen.main.bounds.width)")
+                  print("Высота \(UIScreen.main.bounds.height)")
+                  print(scaleWidth)
+                  print(scaleHeight)
+              }
+      }
+    }
+  }
+}
