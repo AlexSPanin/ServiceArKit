@@ -61,21 +61,13 @@ extension UIColor {
 extension Color {
     
     //MARK: - предустановленные цвета
-    //    static let mainFoneAR = Color(#colorLiteral(red: 0.08053366095, green: 0.09691237658, blue: 0.1783965826, alpha: 1))
-    //    static let greenAR = Color(#colorLiteral(red: 0.2196078431, green: 0.6901960784, blue: 0, alpha: 1))
-    //    static let darkGreenAR = Color(#colorLiteral(red: 0.1911668777, green: 0.3707632422, blue: 0.2023646832, alpha: 1))
+    
         static let blackAR = Color(#colorLiteral(red: 0.1285863519, green: 0.1285863519, blue: 0.1285863519, alpha: 1)).opacity(0.8)
-    //    static let grayAR = Color(#colorLiteral(red: 0.6658725142, green: 0.6658725142, blue: 0.6658724546, alpha: 1))
-    //    static let ligthGrayAR = Color(#colorLiteral(red: 0.7530785203, green: 0.7530786395, blue: 0.7530786395, alpha: 1))
-    //    static let brownAR = Color(#colorLiteral(red: 0.6679978967, green: 0.4751212597, blue: 0.2586010993, alpha: 1)).opacity(0.1)
-    //    static let ligthBrownAR = Color(#colorLiteral(red: 0.6679978967, green: 0.4751212597, blue: 0.2586010993, alpha: 1)).opacity(0.05)
-    //    static let darkBrownAR = Color(#colorLiteral(red: 0.392156899, green: 0.3921568394, blue: 0.392156899, alpha: 1)).opacity(0.5)
-    //    static let darkGrayAR = Color(#colorLiteral(red: 0.392156899, green: 0.3921568394, blue: 0.392156899, alpha: 1))
+        static let grayAR = Color(#colorLiteral(red: 0.2549019754, green: 0.2745098174, blue: 0.3019607961, alpha: 1))
         static let cyanAR = Color(#colorLiteral(red: 0.3942297101, green: 0.539940834, blue: 0.9582518935, alpha: 1))
         static let ligthCyanAR = Color(#colorLiteral(red: 0.2977530956, green: 0.8079112768, blue: 0.9619736075, alpha: 1))
         static let redAR = Color(#colorLiteral(red: 0.9989674687, green: 0.5950558186, blue: 0.595369339, alpha: 1))
-    //    static let whiteAR = Color(#colorLiteral(red: 1, green: 1, blue: 1, alpha: 1))
-    //    static let gradirntAR =  LinearGradient(gradient: Gradient(colors: [.cyanAR, .ligthCyanAR]), startPoint: .leading, endPoint: .trailing)
+        static let gradirntAR =  LinearGradient(gradient: Gradient(colors: [.cyanAR, .ligthCyanAR]), startPoint: .leading, endPoint: .trailing)
     
     /// установка цвета в формате #FFFFFFFF
     /// - Parameter hex: маска цвета
