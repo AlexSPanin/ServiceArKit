@@ -29,7 +29,7 @@ let userDefaults = UserDefaults.standard                       // краткая
 
 // управление печатью в сообщениях
 let isPrinting: Bool = true                                    // единый признак печати сообщений в методах
-
+let printObserver: Bool = false                                // включение и печать обзервера печати динамики загрузки файлов
 // коофициент для пересчета элементов при малой ширине экрана
 let isSmallWIDTH: Bool = WIDTH < 400
 let isSmallHEIGHT: Bool = HEIGHT < 700
