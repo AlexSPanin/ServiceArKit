@@ -10,6 +10,8 @@ import SwiftUI
 //MARK: - параметры экрана и версии программы
 let scaleScreen = UIScreen.main.scale
 let native = UIScreen.main.nativeScale
+let startPoint: CGPoint = CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)     // срединная точка экрана
+let yPositionScene: Float = -0.005                                    // базовая позиция сцены по вертикали в метрах чуть утоплена
 let WIDTH = UIScreen.main.bounds.width > UIScreen.main.bounds.height ? UIScreen.main.bounds.height : UIScreen.main.bounds.width
 let HEIGHT = UIScreen.main.bounds.width < UIScreen.main.bounds.height ? UIScreen.main.bounds.height : UIScreen.main.bounds.width
 let version = Bundle.main.appVersion                                          // версия программы
