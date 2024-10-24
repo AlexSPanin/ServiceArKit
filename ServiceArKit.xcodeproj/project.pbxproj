@@ -17,9 +17,22 @@
 		E2373D2B2CAD10B6003E5963 /* ServiceArKit.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ServiceArKit.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E2C10AE32CCA15B000532D3F /* Exceptions for "ServiceArKit" folder in "ServiceArKit" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E2373D2A2CAD10B6003E5963 /* ServiceArKit */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E2373D2D2CAD10B6003E5963 /* ServiceArKit */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E2C10AE32CCA15B000532D3F /* Exceptions for "ServiceArKit" folder in "ServiceArKit" target */,
+			);
 			path = ServiceArKit;
 			sourceTree = "<group>";
 		};
@@ -281,7 +294,9 @@
 				DEVELOPMENT_TEAM = QD5349NP78;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ServiceArKit/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_MetalCaptureEnabled = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -318,7 +333,9 @@
 				DEVELOPMENT_TEAM = QD5349NP78;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ServiceArKit/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				INFOPLIST_KEY_MetalCaptureEnabled = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

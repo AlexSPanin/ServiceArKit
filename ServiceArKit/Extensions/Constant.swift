@@ -14,11 +14,13 @@ let startPoint: CGPoint = CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main
 let yPositionScene: Float = -0.005                                    // базовая позиция сцены по вертикали в метрах чуть утоплена
 let WIDTH = UIScreen.main.bounds.width > UIScreen.main.bounds.height ? UIScreen.main.bounds.height : UIScreen.main.bounds.width
 let HEIGHT = UIScreen.main.bounds.width < UIScreen.main.bounds.height ? UIScreen.main.bounds.height : UIScreen.main.bounds.width
-let version = Bundle.main.appVersion                                          // версия программы
+
 let scaleWidth = WIDTH / 300
 let scaleHeight = HEIGHT / 500
 let portraitView = UIScreen.main.bounds.width < UIScreen.main.bounds.height   // портретный экран при старте
-let iPad = UIDevice.current.modelName.contains("iPad")                        // определили что iPad
+let version: String = Bundle.main.appVersion                              // для принудительного обновления при внешней проверке
+let nameDevice: String = UIDevice.current.modelName                       // наименование устройства
+let iPad: Bool = nameDevice.contains("iPad")                              // признак что устройство iPad
 
 let nameLogo = "ServiceArKit_logo"
 

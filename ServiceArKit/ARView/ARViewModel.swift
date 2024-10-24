@@ -82,24 +82,41 @@ final class ARViewModel: ObservableObject {
     @Published var errorMovePoint: Bool = false                                              // ошибка отрисовки подвижной точки
     @Published var errorMoveNode: Bool = false                                               // ошибка отрисовки подвижной ноды
     //MARK: - выбранные, загруженные
-//    @Published var selectedModel: Model?                                                // выбранная и уже загруженная модель из каталога
+//    @Published var selectedModel: Model?                                                   // выбранная и уже загруженная модель из каталога
     var sceneObserver: Cancellable?                                                          // управление включением и выключением обзервера
     var isSupportSceneReconstruction: Bool = false                                           // признак реконструкции сцены лидаром
     let coachingOverlay = ARCoachingOverlayView()                                            // управление поиском плоскостей
     
-    private let isPrint: Bool = false                                                                // признак печати уведомлений
+    private let isPrint: Bool = false                                                        // признак печати уведомлений
     
     init() {
         printMessage("Инициализация ARViewModel", isPrint: isPrint)
         arView = ARView(frame: .zero)
-        configure()
+//        configure()
+    }
+    
+    func createdModel() {
+                    // Create a cube model
+                    let model = Entity()
+                    let mesh = MeshResource.generateBox(size: 0.1, cornerRadius: 0.005)
+                    let material = SimpleMaterial(color: .gray, roughness: 0.15, isMetallic: true)
+                    model.components.set(ModelComponent(mesh: mesh, materials: [material]))
+                    model.position = [0, 0.05, 0]
+        
+                    // Create horizontal plane anchor for the content
+                    let anchor = AnchorEntity(.plane(.horizontal, classification: .any, minimumBounds: SIMD2<Float>(0.2, 0.2)))
+                    anchor.addChild(model)
+        
+                    // Add the horizontal plane anchor to the scene
+        arView.scene.addAnchor(anchor)
+//        arView.cameraMode = .ar
     }
     
     /// конфигурируем с определением горизонтальной плоскости
     func configure() {
         guard Permissions.shared.checkPermissions(type: .video) else { notification = .deniedCamera; return }
-        notification = .isConfigARView
         printMessage("Начало конфигурации плоскости работы", isPrint: isPrint)
+        notification = .isConfigARView
         let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = [.horizontal]
         if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
@@ -109,6 +126,7 @@ final class ARViewModel: ObservableObject {
         configuration.prepareForInterfaceBuilder()
         arView.session.run(configuration)
         addCoachingOverlay(false)
+ //       createdModel()
         initObserverRaycast(false)
     }
     

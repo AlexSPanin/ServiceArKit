@@ -19,7 +19,7 @@ final class Permissions {
     /// - Parameter type: тип ресурса
     func checkPermissions(type: AVMediaType) -> Bool {
         let status = AVCaptureDevice.authorizationStatus(for: type)
-        printMessage(status == .authorized ? "Есть доступ" : "ОШИБКА: Нет доступа")
+        printMessage(status == .authorized ? "Есть доступ \(type)" : "ОШИБКА: Нет доступа к \(type)")
         return status == .authorized
     }
     
@@ -27,8 +27,6 @@ final class Permissions {
     /// - Parameter completion: булевое значение доступа
     /// - Parameter type: тип ресурса
     func requestPermission(type: AVMediaType, completion: @escaping (Bool) -> Void ) {
-        AVCaptureDevice.requestAccess(for: type, completionHandler: { accessGranted in
-            completion(accessGranted)
-        })
+        AVCaptureDevice.requestAccess(for: type, completionHandler: { accessGranted in completion(accessGranted) })
     }
 }

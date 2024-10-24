@@ -6,13 +6,20 @@
 //
 
 import SwiftUI
+import RealityKit
 
 struct ARViewUI: View {
+    @EnvironmentObject var activ: AppState
+    @StateObject var viewModel = ARViewModel()
+    
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ZStack {
+            ARViewContainer(viewModel: viewModel).edgesIgnoringSafeArea(.all)
+        }
+        .ignoresSafeArea()
+        .onAppear {
+            viewModel.configure()
+        }
     }
-}
-
-#Preview {
-    ARViewUI()
 }
