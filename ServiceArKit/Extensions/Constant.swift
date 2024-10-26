@@ -7,25 +7,26 @@
 
 import SwiftUI
 
+let small: CGFloat = 400
+let base: CGSize = CGSize(width: 300, height: 500)
+
 //MARK: - параметры экрана и версии программы
 let scaleScreen = UIScreen.main.scale
 let native = UIScreen.main.nativeScale
-let startPoint: CGPoint = CGPoint(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.midY)     // срединная точка экрана
-let yPositionScene: Float = -0.005                                    // базовая позиция сцены по вертикали в метрах чуть утоплена
-let WIDTH = UIScreen.main.bounds.width > UIScreen.main.bounds.height ? UIScreen.main.bounds.height : UIScreen.main.bounds.width
-let HEIGHT = UIScreen.main.bounds.width < UIScreen.main.bounds.height ? UIScreen.main.bounds.height : UIScreen.main.bounds.width
 
-let scaleWidth = WIDTH / 300
-let scaleHeight = HEIGHT / 500
-let portraitView = UIScreen.main.bounds.width < UIScreen.main.bounds.height   // портретный экран при старте
+let yPositionScene: Float = -0.005                                        // базовая позиция сцены по вертикали в метрах чуть утоплена
+
+let bundel: String = Bundle.main.appVersion + "." + Bundle.main.appBuild  // для обновления хранилища при обновлении версии программы
 let version: String = Bundle.main.appVersion                              // для принудительного обновления при внешней проверке
 let nameDevice: String = UIDevice.current.modelName                       // наименование устройства
 let iPad: Bool = nameDevice.contains("iPad")                              // признак что устройство iPad
 
 let nameLogo = "ServiceArKit_logo"
 
-let maxData: Int64 = 10 * 1024 * 1024                          // максимальный объем файла для прямого скачивания
-let userDefaults = UserDefaults.standard                       // краткая ссылка
+let idProduct: String = ""                                       // id карточки товара для загрузки модели
+let maxData: Int64 = 10 * 1024 * 1024                            // максимальный объем файла для прямого скачивания
+let userDefaults = UserDefaults.standard                         // краткая ссылка
+
 //let local = FileAppManager.shared                              // краткая ссылка на менеджер по работе с локальными файлами
 //let network = NetworkManager.shared                            // краткая ссылка на менеджер по работе с сетью
 //let db = DataBase.shared                                       // краткая ссылка на менеджер по работе с локальным кешем
@@ -34,9 +35,7 @@ let userDefaults = UserDefaults.standard                       // краткая
 // управление печатью в сообщениях
 let isPrinting: Bool = true                                    // единый признак печати сообщений в методах
 let printObserver: Bool = false                                // включение и печать обзервера печати динамики загрузки файлов
-// коофициент для пересчета элементов при малой ширине экрана
-let isSmallWIDTH: Bool = WIDTH < 400
-let isSmallHEIGHT: Bool = HEIGHT < 700
+
 
 // максимальные размеры картинок
 let imageLogo: CGSize = CGSize(width: 600, height: 338)        // логотип производителя
@@ -56,24 +55,7 @@ let xl: CGFloat = 13
 let xxl: CGFloat = 15
 let xxx: CGFloat = 20
 
-let hPadding: CGFloat = scaleWidth > 2 ? 30 : 15 * scaleWidth
-let vPadding: CGFloat = scaleHeight > 1.5 ? 25 : 15 * scaleHeight
-
-let buttonSize: CGSize = CGSize(width: imageXL , height: imageS)
-
-let stHeightFence: Float = 2.8                                 // стандартная высота ограждения обоев в метрах
-let screen: CGFloat = WIDTH * 0.95
-let widthNote: CGFloat = WIDTH / scaleWidth
-let corner: CGFloat = scaleWidth > 1 ? 10 : 10 * scaleWidth                      // скругление углов поумолчанию
 let scale: CGFloat = 0.9                                                         // минимальное значение масштабирования по умолчанию
-
-// размеры изображений
-let imageXL: CGFloat = WIDTH / scaleWidth * (isSmallWIDTH ? 0.3 : 0.4)
-let imageL: CGFloat = WIDTH / scaleWidth * (isSmallWIDTH ? 0.2 : 0.3)
-let imageN: CGFloat = WIDTH / scaleWidth * (isSmallWIDTH ? 0.15 : 0.2)
-let imageS: CGFloat = WIDTH / scaleWidth * (isSmallWIDTH ? 0.08 : 0.1)
-let pickerL: CGFloat = WIDTH / scaleWidth * (isSmallWIDTH ? 0.05 : 0.06)
-let picker: CGFloat = WIDTH / scaleWidth * (isSmallWIDTH ? 0.02 : 0.03)
 
 // цвета для приложения
 let mainColor: Color = Color(#colorLiteral(red: 0.4756349325, green: 0.4756467342, blue: 0.4756404161, alpha: 1))
@@ -91,3 +73,21 @@ let fontN = Font.body
 let fontL = Font.headline
 let fontLX = Font.title
 let fontLXX = Font.largeTitle
+
+// символы не используемые при проверке имени файла
+let targetString: [Character] = [Character("$"),
+                                 Character("#"),
+                                 Character("*"),
+                                 Character("{"),
+                                 Character("}"),
+                                 Character("|"),
+                                 Character("?"),
+                                 Character("."),
+                                 Character("="),
+                                 Character(">"),
+                                 Character("<"),
+                                 Character("%"),
+                                 Character("&"),
+                                 Character("+"),
+                                 Character("~"),
+                                 Character("?")]

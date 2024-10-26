@@ -56,44 +56,26 @@ struct ServiceArKit: App {
     // register app delegate for Firebase setup
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject var activ = AppState()
-    
+    @StateObject var constantSetting = ConstantSetting()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(.light)
                 .environmentObject(activ)
+                .environmentObject(constantSetting)
                 .onAppear {
                     print("System Parameters \(nameDevice) признак iPad \(iPad):")
                     print(Bundle.main.displayName)
                     print(version)
-                    print(UIDevice.current.systemVersion)
-                    print(UIScreen.main.scale)
-                    print(UIScreen.main.nativeScale)
-                    print("Ширина \(UIScreen.main.bounds.width)")
-                    print("Высота \(UIScreen.main.bounds.height)")
-                    print(scaleWidth)
-                    print(scaleHeight)
+                    print(bundel)
+                    print(scaleScreen)
+                    print(native)
+                    print("Ширина \(constantSetting.view.width)")
+                    print("Высота \(constantSetting.view.height)")
                 }
         }
     }
 }
 
 
-/// Обзервер для отслеживания активности приложения и сохранения кеш
-class AppState: ObservableObject {
-    @Published var isActive = true
-    private var observers = [NSObjectProtocol]()
-    
-    init() {
-        observers.append(
-            NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
-                self.isActive = true
-            }
-        )
-        observers.append(
-            NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { _ in
-                self.isActive = false }
-        )
-    }
-    deinit { observers.forEach(NotificationCenter.default.removeObserver) }
-}
