@@ -58,24 +58,56 @@ class ConstantSetting: ObservableObject {
         self.imageS = widthScale * (isSmall ? 0.08 : 0.1)
         self.pickerL = widthScale * (isSmall ? 0.05 : 0.06)
         self.picker = widthScale * (isSmall ? 0.02 : 0.03)
-
+    }
+    
+    func change() {
+        let orientation = UIDevice.current.orientation
+        let isLandscape = orientation.isLandscape
+        let bounds = UIScreen.main.bounds
+        let midPoint = CGPoint(x: bounds.midX, y: bounds.midY)
+        let width = isLandscape ? max(bounds.height, bounds.width) : min(bounds.height, bounds.width)
+        let scaleWidth = width / (isLandscape ? base.height : base.width)
+        let heigth = isLandscape ? min(bounds.height, bounds.width) : max(bounds.height, bounds.width)
+        let scaleHeight = heigth / (isLandscape ? base.width : base.height)
+        let size = CGSize(width: width, height: heigth)
+        let isSmall = width < small || heigth < small
+        let widthScale: CGFloat = width / scaleWidth
+        
+        self.orientation = orientation
+        self.view = size
+        self.screen = size.width * 0.95
+        self.midPoint = midPoint
+        self.scaleWidth = scaleWidth
+        self.scaleHeight = scaleHeight
+        self.isSmall = isSmall
+        self.corner = scaleWidth > 1 ? 10 : 10 * scaleWidth
+        self.hPadding = scaleWidth > 2 ? 30 : 15 * scaleWidth
+        self.vPadding = scaleHeight > 1.5 ? 25 : 15 * scaleHeight
+        self.imageXL = widthScale * (isSmall ? 0.3 : 0.4)
+        self.imageL = widthScale * (isSmall ? 0.2 : 0.3)
+        self.imageN = widthScale * (isSmall ? 0.15 : 0.2)
+        self.imageS = widthScale * (isSmall ? 0.08 : 0.1)
+        self.pickerL = widthScale * (isSmall ? 0.05 : 0.06)
+        self.picker = widthScale * (isSmall ? 0.02 : 0.03)
     }
 }
 
 struct DeviceRotationViewModifier: ViewModifier {
+    @EnvironmentObject var constants: ConstantSetting
     let setting: (ConstantSetting) -> Void
     func body(content: Content) -> some View {
         content
             .onAppear()
             .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-                setting ( ConstantSetting() )
+                constants.change()
+                setting ( constants )
             }
     }
 }
 
 extension View {
-    /// Определяет поворот устройства
-    /// - Parameter setting: тип ориентации и размер экрана и увеличения по ширине и высоте взависимости от размера экрана
+    /// Определяет поворот устройства и обновляет @EnvironmentObject var constants: ConstantSetting
+    /// - Parameter setting: перерасчет парраметров экрана приложения
     /// - Returns: отработка поворота
     func onRotate(perform setting: @escaping (ConstantSetting) -> Void ) -> some View {
         self.modifier(DeviceRotationViewModifier(setting: setting))

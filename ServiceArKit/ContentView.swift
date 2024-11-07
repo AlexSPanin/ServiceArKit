@@ -10,6 +10,7 @@ import SwiftUI
 
 
 struct ContentView : View {
+    @EnvironmentObject var constants: ConstantSetting
 
     var body: some View {
         
@@ -35,11 +36,12 @@ struct ContentView : View {
 //
 //        }.ignoresSafeArea()
         
-       
+        ZStack {
             ARViewUI()
-       
-
-        
+        }
+        .onRotate { new in
+            printMessage("Размер Окна приложения \(new.view)")
+        }
     }
 
 }

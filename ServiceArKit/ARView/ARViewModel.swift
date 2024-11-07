@@ -11,48 +11,7 @@ import ARKit
 import Combine
 
 final class ARViewModel: ObservableObject {
-    //MARK: - системные названия моделей
-    enum NameEntitys {
-        
-        // для лучей
-        case entityLine            // линия до точки прицеливания
-        case movePoint             // точка прицеливания
-        case nodePoint             // точка прицеливания для обоев и полов
-        case anchorMovePoint       // привязка точки прицеливания
 
-        // для основной сцены
-        case anchorScene           // привязка основной сцены
-        case entityScene           // основная сцена
-        
-        // для ограждений
-        case entityFence            // сцены вертикальных поверхностей
-        case section                // секция для вертикальных поверхностей
-        case rectangle              // элемент формирования вертикальной поверхности
-        case text                   // элемент надписи
-       
-        // для покрытия
-        case entityFloor             // сцены горизонтальных поверхностей
-        case border                  // бордюры для горизонтальных поверхностей
-        case polygon                 // полигоны для горизонтальных поверхностей
-        
-        var name: String {
-            switch self {
-            case .entityLine: return "add-line"
-            case .movePoint: return "add-movePoint"
-            case .nodePoint: return "add-nodePoint"
-            case .anchorMovePoint: return "add-anchorMovePoint"
-            case .anchorScene: return "sceneAnchor"
-            case .entityScene: return "entityScene"
-            case .entityFence: return "sceneFence"
-            case .section: return "sectionFence"
-            case .rectangle: return "add-rectangle"
-            case .entityFloor: return "sceneFloor"
-            case .border: return "add-border"
-            case .polygon: return "polygonFloor"
-            case .text: return "add-text"
-            }
-        }
-    }
     enum TypeRaycastError {
         case no, querry, result
     }
@@ -67,7 +26,7 @@ final class ARViewModel: ObservableObject {
     }
     
     enum Status: Codable {
-        case start                // режим работы AR View без обзервера
+        case start                // режим работы ARView без обзервера
         case searth               // режим ожидания поиска плоскости
         case add                  // режим добавления
         case edit                 // режим редактирования
@@ -87,33 +46,116 @@ final class ARViewModel: ObservableObject {
     var isSupportSceneReconstruction: Bool = false                                           // признак реконструкции сцены лидаром
     let coachingOverlay = ARCoachingOverlayView()                                            // управление поиском плоскостей
     
-    private let isPrint: Bool = false                                                        // признак печати уведомлений
+    
+    @Published var entity: ModelProperties? { didSet {
+        //updateIsEnablesProperty()
+    } }         // модели
+    //MARK: - выбранные, загруженные
+    @Published var selectedModel: Model?                                                // выбранная и уже загруженная модель из каталога
+    @Published var loadModel: Model? { didSet {
+     //   selectingModel()
+    } }                    // для старта загрузки моделей
+    
+    var product: Product?
+    var constant: ConstantSetting?
+    // модель точки для установки моделей
+    var movePoint: ModelEntity = CreatedModelManager.shared.getPointForEntity(NameEntitys.movePoint.name,
+                                                                              size: 0.025, color: .yellow,
+                                                                              nameStick: nil).clone(recursive: true)
+    private let isPrint: Bool = true                                                        // признак печати уведомлений
     
     init() {
         printMessage("Инициализация ARViewModel", isPrint: isPrint)
         arView = ARView(frame: .zero)
-//        configure()
     }
     
     func createdModel() {
-                    // Create a cube model
-                    let model = Entity()
-                    let mesh = MeshResource.generateBox(size: 0.1, cornerRadius: 0.005)
-                    let material = SimpleMaterial(color: .gray, roughness: 0.15, isMetallic: true)
-                    model.components.set(ModelComponent(mesh: mesh, materials: [material]))
-                    model.position = [0, 0.05, 0]
+        ProductDataManager.shared.loadCard(to: idProduct) { card in
+            self.product = card
+            guard let file = card?.model, !file.isEmpty, !FileAppManager.shared.checkExistFile(to: file, type: fileDirectory) else { return }
+            NetworkManager.shared.loadFileWriteLocal(type: .usdz, file: file, local: fileDirectory) { error in
+                printMessage(error.message, isPrint: self.isPrint)
+            }
+        }
         
-                    // Create horizontal plane anchor for the content
-                    let anchor = AnchorEntity(.plane(.horizontal, classification: .any, minimumBounds: SIMD2<Float>(0.2, 0.2)))
-                    anchor.addChild(model)
-        
-                    // Add the horizontal plane anchor to the scene
-        arView.scene.addAnchor(anchor)
+//        
+//                    // Create a cube model
+//                    let model = Entity()
+//                    let mesh = MeshResource.generateBox(size: 0.1, cornerRadius: 0.005)
+//                    let material = SimpleMaterial(color: .gray, roughness: 0.15, isMetallic: true)
+//                    model.components.set(ModelComponent(mesh: mesh, materials: [material]))
+//                    model.position = [0, 0.05, 0]
+//        
+//                    // Create horizontal plane anchor for the content
+//                    let anchor = AnchorEntity(.plane(.horizontal, classification: .any, minimumBounds: SIMD2<Float>(0.2, 0.2)))
+//                    anchor.addChild(model)
+//        
+//                    // Add the horizontal plane anchor to the scene
+//        arView.scene.addAnchor(anchor)
 //        arView.cameraMode = .ar
+    }
+    
+    public func pressAddEntity(_ p: CGPoint)  {
+        guard let selectedModel = self.selectedModel, let modelEntity = selectedModel.modelEntity else { return }
+        guard let type = TypeModel.allCases.first(where: {$0.label == selectedModel.card.typeModel }) else { return }
+        let product = selectedModel.card
+        let elements = selectedModel.card.elements
+        entity = ModelProperties(idVendor: product.idVendor,
+                                 idCategory: product.idCategory,
+                                 idProduct: product.id,
+                                 model: product.model,
+                                 typeModel: type,
+                                 baseY: product.basePositionY)
+  //      typeModel = type
+        entity?.parts = elements
+        entity?.audio = product.audio
+        entity?.modelGlb = product.modelGlb
+        entity?.modelFields = product.modelFields
+        placeEntity(modelEntity, point: p, baseY: product.basePositionY )
+   //     startAnimation()
+    }
+    
+    //MARK: - методы отрисовки
+
+    func placeEntity (_ modelEntity: ModelEntity, point: CGPoint, baseY: Float) {
+        printMessage("Добавляем модель \(modelEntity.name)")
+        let query = getRaycast(point)
+        deinitSceneObserver(note: "placeEntity")
+        guard query.status == .no else { return }
+        let nameAnchor = NameEntitys.anchorScene.name
+        let nameScene = NameEntitys.entityScene.name
+//        let simd = query.simd
+//        let position = simd.position()                                                          // получили из матрицы координат - позицию
+      //  let scale = project.scale_scene                                                         // получили и масштаб и передали их моделе
+        let clonedEntity = modelEntity.clone(recursive: true)                                   // скопировали модель
+        clonedEntity.name = entity?.nameID ?? ""                                                // добавили ид имя модели
+        clonedEntity.position = query.simd.position()                                             // получили из луча матрицу координат и позицию
+        clonedEntity.scale *= 1.0
+    //    tappedEntity = clonedEntity                                                             // присваиваем tappedEntity новое значение для активации кнопки удаления объекта
+        
+        arView.getScene (scene: nameScene, anchor: nameAnchor) { scene in
+            guard let scene = scene else { return }
+            scene.addChild(clonedEntity, preservingWorldTransform: true)
+            var simd = clonedEntity.transformMatrix(relativeTo: scene)
+            simd.columns.3.y = simd.columns.3.y < -yPositionScene ? -yPositionScene : simd.columns.3.y  // если установка по высоте ниже уровня плоскости, то ставим уровень плоскости
+            simd.columns.3.y += baseY                                                                   // если прописано в установках приподняли модель
+            clonedEntity.setTransformMatrix(simd, relativeTo: scene)
+            // установили стартовые позиции установки
+            self.entity?.simd_scene_first = simd
+            self.entity?.simd_scene_save = simd
+            self.entity?.simd_scene_old = simd
+            self.entity?.simd_scene = simd
+   //         self.installGesturesEntity(to: self.tappedEntity)                                                 // добавляем распознование жестов
+            self.loadModel = nil                                                                              // временно потом надо будет убрать!!!!! перенести в сохранение проекта
+            self.selectedModel?.modelEntity = nil
+            printMessage("Полученное положение модели  по Y \(query.simd.position().y)", isPrint: self.isPrint)
+            printMessage("Положение модели относительно сцены по Y \(simd.columns.3.y)", isPrint: self.isPrint)
+        }
     }
     
     /// конфигурируем с определением горизонтальной плоскости
     func configure() {
+        AuthUserManager.shared.registerAnon { _ in }
         guard Permissions.shared.checkPermissions(type: .video) else { notification = .deniedCamera; return }
         printMessage("Начало конфигурации плоскости работы", isPrint: isPrint)
         notification = .isConfigARView
@@ -125,9 +167,8 @@ final class ARViewModel: ObservableObject {
         }
         configuration.prepareForInterfaceBuilder()
         arView.session.run(configuration)
-        addCoachingOverlay(false)
- //       createdModel()
-        initObserverRaycast(false)
+        addCoachingOverlay(true)
+  //      initObserverRaycast(true)
     }
     
     /// Запуск поиска плоскости в ARView
@@ -183,15 +224,22 @@ final class ARViewModel: ObservableObject {
         guard  statusScene == .add && statusAPP == .isScene else { return }
         printMessage("Инициализация SceneObserver: \(note)", isPrint: isPrint)
 //        updateIsEnablesProperty()
-//        changeEnableMovePoint(to: !isAddMoveNode)
+        changeEnableMovePoint(to: true)
         sceneObserver = arView.scene.subscribe(to: SceneEvents.Update.self, { [self] (event) in updataScene() })
+    }
+    
+    /// Изменение видимости точки прицеливания
+    /// - Parameter status: статус
+    func changeEnableMovePoint(to status: Bool) {
+        guard let anchor = arView.scene.anchors.first(where: {$0.name == NameEntitys.anchorMovePoint.name})  else { return }
+        anchor.isEnabled = status
     }
     
     /// метод отмены подписки
     /// - Parameter note: сообщение к печати уведомления
     func deinitSceneObserver(note: String) {
         printMessage("Отключение Observers: \(note)", isPrint: isPrint)
-//        changeEnableMovePoint(to: false)
+        changeEnableMovePoint(to: false)
 //        distance = 0                                                                   // сбрасываем дистанцию
 //        dellMoveLine()
         sceneObserver?.cancel()
@@ -200,11 +248,11 @@ final class ARViewModel: ObservableObject {
     /// Инициализация и отрисовка сцены
     /// - Parameter simd: массив координат
     func initScene(simd: simd_float4x4, isCheck: Bool) {
-        printMessage("Сброс и формирование новой плоскости")
-        coachingOverlay.setActive(false, animated: true)        // отключили поиск и выключили обзервер
+        printMessage("Сброс и формирование новой плоскости", isPrint: isPrint)
+        coachingOverlay.setActive(false, animated: true)            // отключили поиск и выключили обзервер
         coachingOverlay.activatesAutomatically = false
         configureNonPlane()
-        removeAllAnchors()                         // удалили все анкоры отчистили AR View
+        removeAllAnchors()                                          // удалили все анкоры отчистили AR View
         
         drawScene(simd, isCheck: isCheck) { message in               // нарисовали новую сцену
             printMessage(message.message)
@@ -233,7 +281,8 @@ final class ARViewModel: ObservableObject {
     
     /// проверка наличия сцены
     func checkPlace(_ isCheck: Bool) {
-        let query = getRaycast(startPoint)
+        guard let midPoint = constant?.midPoint else { return }
+        let query = getRaycast(midPoint)
         let status = query.status
         if statusAPP == .checkSearth {
             printMessage("Сцена определена начинает проверка корректности сцены", isPrint: isPrint)
@@ -250,14 +299,14 @@ final class ARViewModel: ObservableObject {
             guard status == .no else { return }                                                                // если ошибка включаем поиск сцены автоматический
             deinitSceneObserver(note: "Статус поиска сцены без ошибки checkPlace()")                           // плоскость найдена отключили обзервер
             guard statusAPP != .initDB else { statusAPP = .endInit; return }                                   // если это фоновый поиск то как только нашли поменяли statusScene
-            initScene(simd: query.simd, isCheck: isCheck)                                                                        // инициализация сцены
+            initScene(simd: query.simd, isCheck: isCheck)                                                      // инициализация сцены
         }
     }
     
     /// обработчик луча проверка горизонтальной плоскости
     /// - Parameter p: точка луча
     /// - Returns: кортеж (ошибкаб результат)
-    func getRaycast(_ p: CGPoint) -> (status: TypeRaycastError, simd: simd_float4x4) {
+    private func getRaycast(_ p: CGPoint) -> (status: TypeRaycastError, simd: simd_float4x4) {
         let query = arView.makeRaycastQuery(from: p, allowing: .existingPlaneInfinite, alignment: .horizontal)
         guard let firstResult = query else { return (.querry, simd_float4x4()) }
         let results = arView.session.raycast(firstResult)
@@ -277,14 +326,44 @@ final class ARViewModel: ObservableObject {
     
     private func changeStatusAPP() {
         printMessage("Статус приложения \(statusAPP)", isPrint: isPrint)
-//        switch statusAPP {
-//        case .loadView: do {}
-//        case .initDB: initDB()                                                      // запуск инициализации базы данных
-//        case .firstSearth: initFirstScene()                                         // запуск поиска первой сцены
-//        case .endInit: if decodingURL != nil { startDeepLink() }                    // запустили ссылку если она есть
-//        case .isScene:  do {}
-//        case .checkSearth: initObserverRaycast(true)                                // запуск обзервера на проверку корректности определения сцены
-//        }
+        switch statusAPP {
+        case .initDB: initDB()                                                      // запуск инициализации базы данных
+        case .firstSearth: initFirstScene()                                         // запуск поиска первой сцены
+ //       case .endInit: if decodingURL != nil { startDeepLink() }                    // запустили ссылку если она есть
+        case .checkSearth: initObserverRaycast(true)                                // запуск обзервера на проверку корректности определения сцены
+        default : do {}
+        }
+    }
+    
+    /// Анимированный поиск плоскости с установкой сцены
+    private func initFirstScene() {
+        printMessage("Инициализация первого поиска сцены")
+        configureResetTracking()                                       // первый и единственный раз определяем плоскость
+ //       addTapGestureRecognizer()                                      // добавление отработки жестов на экране
+ //       updateIsEnablesProperty()                                      // обнавляем наличие кнопки для редактирования свойств
+    }
+    
+    /// Получение базы данных и инициализация дополнительных библиотек
+    private func initDB() {
+        guard Permissions.shared.checkPermissions(type: .video) else { notification = .deniedCamera; return  }
+ //       initializeMetal()
+        fetchDataBase()
+        
+    }
+    
+    
+    
+    /// загрузка основных массивов и ключей
+    private func fetchDataBase() {
+//        storage.load(type: .user, model: UserAPP.self) { user in self.user = user }
+//        checkUserTypeLinks()                                                                  // проверили откуда пришел пользователь
+//        activeGroups = db.groupCategories.compactMap({$0.0})
+//        modelsFloor = db.getModelsType(type: .floor)?.compactMap( {$0.card.collection}) ?? []
+//        modelsRoof = db.getModelsType(type: .roof)?.compactMap( {$0.card.collection} ) ?? []
+//        updateIsEnablesProperty()                                                             // обнавляем наличие кнопки для редактирования свойств
+//        printMessage("Базы данных сформированы Входной URL \(String(describing: openURL))")
+//        guard openURL != nil else {  showCatalog = true; return }
+//        printMessage("Ожидаем открытия ссылки \(user?.typeLinks ?? "нет ссылки")")
     }
     
     /// Отработка изменения статуса сцены
@@ -327,16 +406,13 @@ final class ARViewModel: ObservableObject {
     /// генерация общей сцены
     /// - Parameter simd: координаты плоскости определенные Raycast
     func drawScene(_ simd: simd_float4x4, isCheck: Bool, completion: @escaping(ErrorMessage) -> Void) {
-
-//        completion(.ok("Проверка на симуляторе"))
+        let movePoint = movePoint.clone(recursive: true)   // создаем клон точки прицеливания для основной сцены
+        movePoint.position = [0,0,0]
+        let pointAnchor = AnchorEntity(world: simd)
+        pointAnchor.name = NameEntitys.anchorMovePoint.name
+        pointAnchor.isEnabled = false
+        pointAnchor.addChild(movePoint)
         
-//        let movePoint = movePoint.clone(recursive: true)   // создаем клон точки прицеливания для основной сцены
-//        movePoint.position = [0,0,0]
-//        let pointAnchor = AnchorEntity(world: simd)
-//        pointAnchor.name = NameEntitys.anchorMovePoint.name
-//        pointAnchor.isEnabled = false
-//        pointAnchor.addChild(movePoint)
-//        
         // создаем прозрачную плоскость 10 на 10 метров средняя точка первая точка
         let color = UIColor.white
         let width: Float = 10
@@ -354,24 +430,24 @@ final class ARViewModel: ObservableObject {
         let sceneAnchor = AnchorEntity(plane: .horizontal)
         sceneAnchor.name = NameEntitys.anchorScene.name
         sceneAnchor.addChild(sceneEntity)
-//        
-//        // размещаем анкор в основном вью
-//        printMessage("Название сцены \(sceneEntity.name) Название Анкора \(sceneAnchor.name)")
-//        arView.scene.addAnchor(sceneAnchor)
-//        arView.scene.addAnchor(pointAnchor)
-//        // сохраняем в проекте матрицы анкора и общей сцены и устанавливаем признак готовности
-//        let simd_scene = sceneEntity.transformMatrix(relativeTo: sceneAnchor)
-//        let scale = sceneAnchor.scale(relativeTo: sceneAnchor)
-          let simd_anchor = sceneAnchor.transform.matrix
-//        project.simd_scene_anchor = simd_anchor
-//        project.simd_scene = simd_scene
-//        project.simd_scene_first = simd_scene
-//        project.scale_scene = scale
-//        project.scale_scene_first = scale
-//        project.isReady = true
-//        project.idUser = user?.id ?? ""
-//        printMessage("Сохраненные координаты точки наведения Anchor :\n   x - \(simd_anchor.position().x)\n   y - \(simd_anchor.position().y)\n   z - \(simd_anchor.position().z)")
-//        printMessage("Сохраненные координаты точки наведения Сцены :\n   x - \(simd_scene.position().x)\n   y - \(simd_scene.position().y)\n   z - \(simd_scene.position().z)")
+        
+        // размещаем анкор в основном вью
+        printMessage("Название сцены \(sceneEntity.name) Название Анкора \(sceneAnchor.name)")
+        arView.scene.addAnchor(sceneAnchor)
+        arView.scene.addAnchor(pointAnchor)
+        // сохраняем в проекте матрицы анкора и общей сцены и устанавливаем признак готовности
+        let simd_scene = sceneEntity.transformMatrix(relativeTo: sceneAnchor)
+        let scale = sceneAnchor.scale(relativeTo: sceneAnchor)
+        let simd_anchor = sceneAnchor.transform.matrix
+        //        project.simd_scene_anchor = simd_anchor
+        //        project.simd_scene = simd_scene
+        //        project.simd_scene_first = simd_scene
+        //        project.scale_scene = scale
+        //        project.scale_scene_first = scale
+        //        project.isReady = true
+        //        project.idUser = user?.id ?? ""
+        printMessage("Сохраненные координаты точки наведения Anchor :\n   x - \(simd_anchor.position().x)\n   y - \(simd_anchor.position().y)\n   z - \(simd_anchor.position().z)")
+        printMessage("Сохраненные координаты точки наведения Сцены :\n   x - \(simd_scene.position().x)\n   y - \(simd_scene.position().y)\n   z - \(simd_scene.position().z)")
         guard isCheck else {  completion(.ok("Анкор без проверок на координаты")); return }
         if simd_anchor.position().x == 0 && simd_anchor.position().y == 0 && simd_anchor.position().z == 0 {
             completion(.error("Нулевой Анкор"))

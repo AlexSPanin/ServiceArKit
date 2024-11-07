@@ -7,12 +7,11 @@
 
 import SwiftUI
 
-let small: CGFloat = 400
-let base: CGSize = CGSize(width: 300, height: 500)
+let small: CGFloat = 350                                                // критерий малого экрана
+let base: CGSize = CGSize(width: 300, height: 500)                      // критерии масштаба к малому экрану
 
-//MARK: - параметры экрана и версии программы
-let scaleScreen = UIScreen.main.scale
-let native = UIScreen.main.nativeScale
+let scaleScreen = UIScreen.main.scale                                   // масштаб экрана устройства
+let native = UIScreen.main.nativeScale                                  // реальный масштаб экрана устройства
 
 let yPositionScene: Float = -0.005                                        // базовая позиция сцены по вертикали в метрах чуть утоплена
 
@@ -22,11 +21,11 @@ let nameDevice: String = UIDevice.current.modelName                       // н�
 let iPad: Bool = nameDevice.contains("iPad")                              // признак что устройство iPad
 
 let nameLogo = "ServiceArKit_logo"
-
-let idProduct: String = ""                                       // id карточки товара для загрузки модели
+let language = "RUS"
+let idProduct: String = "4aH8luXNc0aUAaqGxrw9"                   // id карточки товара для загрузки модели
 let maxData: Int64 = 10 * 1024 * 1024                            // максимальный объем файла для прямого скачивания
 let userDefaults = UserDefaults.standard                         // краткая ссылка
-
+let fileDirectory: TypeDirectory = .doc                          // директория для хранения файлов документов, изображения и моделей
 //let local = FileAppManager.shared                              // краткая ссылка на менеджер по работе с локальными файлами
 //let network = NetworkManager.shared                            // краткая ссылка на менеджер по работе с сетью
 //let db = DataBase.shared                                       // краткая ссылка на менеджер по работе с локальным кешем

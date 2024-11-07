@@ -11,6 +11,8 @@
 		E2373D432CAD133F003E5963 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = E2373D422CAD133F003E5963 /* FirebaseStorage */; };
 		E2373D452CAD1348003E5963 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = E2373D442CAD1348003E5963 /* FirebaseDatabase */; };
 		E2373D472CAD1354003E5963 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = E2373D462CAD1354003E5963 /* FirebaseStorageCombine-Community */; };
+		E2692BDF2CCD5E690085C181 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = E2692BDE2CCD5E690085C181 /* FirebaseAuth */; };
+		E2692BE12CCD5EE40085C181 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = E2692BE02CCD5EE40085C181 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,7 +45,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E2692BE12CCD5EE40085C181 /* FirebaseMessaging in Frameworks */,
 				E2373D452CAD1348003E5963 /* FirebaseDatabase in Frameworks */,
+				E2692BDF2CCD5E690085C181 /* FirebaseAuth in Frameworks */,
 				E2373D412CAD1325003E5963 /* FirebaseCore in Frameworks */,
 				E2373D472CAD1354003E5963 /* FirebaseStorageCombine-Community in Frameworks */,
 				E2373D432CAD133F003E5963 /* FirebaseStorage in Frameworks */,
@@ -101,6 +105,8 @@
 				E2373D422CAD133F003E5963 /* FirebaseStorage */,
 				E2373D442CAD1348003E5963 /* FirebaseDatabase */,
 				E2373D462CAD1354003E5963 /* FirebaseStorageCombine-Community */,
+				E2692BDE2CCD5E690085C181 /* FirebaseAuth */,
+				E2692BE02CCD5EE40085C181 /* FirebaseMessaging */,
 			);
 			productName = ServiceArKit;
 			productReference = E2373D2B2CAD10B6003E5963 /* ServiceArKit.app */;
@@ -415,6 +421,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = E2373D3E2CAD1227003E5963 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseStorageCombine-Community";
+		};
+		E2692BDE2CCD5E690085C181 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2373D3E2CAD1227003E5963 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		E2692BE02CCD5EE40085C181 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2373D3E2CAD1227003E5963 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

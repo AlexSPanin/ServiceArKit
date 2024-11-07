@@ -13,7 +13,7 @@ import FirebaseDatabase
 var ref: DatabaseReference!
 
 final class NetworkManager {
-    private let isPrint: Bool = false
+    private let isPrint: Bool = true
     static let shared = NetworkManager()
     private init() {}
     
