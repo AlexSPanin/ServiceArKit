@@ -18,14 +18,14 @@ final class ARViewModel: ObservableObject {
     
     enum StatusAPP {
         case loadView             // запуск приложения
-        case initDB               // инициализация базы данных
-        case endInit              // окончание инициализации после фонового определения плоскости
-        case firstSearth          // запуск фонового поиска плоскостей
+        case startInitDB          // инициализация базы данных
+        case endInitDB            // окончание инициализации после фонового определения плоскости
+        case startSearth          // запуск фонового поиска плоскостей
         case checkSearth          // проверка корректности поиска сцены
         case isScene              // плоскость найдена
     }
     
-    enum Status: Codable {
+    enum StatusScene: Codable {
         case start                // режим работы ARView без обзервера
         case searth               // режим ожидания поиска плоскости
         case add                  // режим добавления
@@ -36,7 +36,7 @@ final class ARViewModel: ObservableObject {
     @Published var arView: ARView!                                                           // основное вью
     @Published var notification: NotificationAlert?                                          // окна уведомления
     @Published var statusAPP: StatusAPP = .loadView { didSet { changeStatusAPP() }}          // статус работы приложения
-    @Published var statusScene: Status = .start { didSet { changeStatusScene()  } }          // статус сцены редактиование, добавление
+    @Published var statusScene: StatusScene = .start { didSet { changeStatusScene()  } }          // статус сцены редактиование, добавление
     //MARK: - публикация ошибок поиска плоскости или точки
     @Published var errorMovePoint: Bool = false                                              // ошибка отрисовки подвижной точки
     @Published var errorMoveNode: Bool = false                                               // ошибка отрисовки подвижной ноды
@@ -265,7 +265,7 @@ final class ARViewModel: ObservableObject {
         //        guard self.selectedModel != nil || !self.project.isEmpty else { self.statusScene = .start; return } // если есть выбраная модель то переходим в режим добавления
                 self.statusScene = .add
             default:
-                self.statusAPP = .firstSearth                                                                          // инициализация нового поиска сцены
+                self.statusAPP = .startSearth                                                                          // инициализация нового поиска сцены
                 self.configureResetTracking()                                                                          // сброс конфигурации
             }
         }
@@ -292,13 +292,13 @@ final class ARViewModel: ObservableObject {
                 return
             }
             printMessage("ОШИБКА формирования сцены - сброс", isPrint: isPrint)
-            statusAPP = .firstSearth                                                                          // инициализация нового поиска сцены
+            statusAPP = .startSearth                                                                          // инициализация нового поиска сцены
             configureResetTracking()                                                                          // сброс конфигурации
         } else {
             printMessage("Сцена еще не определена", isPrint: isPrint)
             guard status == .no else { return }                                                                // если ошибка включаем поиск сцены автоматический
             deinitSceneObserver(note: "Статус поиска сцены без ошибки checkPlace()")                           // плоскость найдена отключили обзервер
-            guard statusAPP != .initDB else { statusAPP = .endInit; return }                                   // если это фоновый поиск то как только нашли поменяли statusScene
+            guard statusAPP != .startInitDB else { statusAPP = .endInitDB; return }                                   // если это фоновый поиск то как только нашли поменяли statusScene
             initScene(simd: query.simd, isCheck: isCheck)                                                      // инициализация сцены
         }
     }
@@ -327,8 +327,8 @@ final class ARViewModel: ObservableObject {
     private func changeStatusAPP() {
         printMessage("Статус приложения \(statusAPP)", isPrint: isPrint)
         switch statusAPP {
-        case .initDB: initDB()                                                      // запуск инициализации базы данных
-        case .firstSearth: initFirstScene()                                         // запуск поиска первой сцены
+        case .startInitDB: initDB()                                                      // запуск инициализации базы данных
+        case .startSearth: initFirstScene()                                         // запуск поиска первой сцены
  //       case .endInit: if decodingURL != nil { startDeepLink() }                    // запустили ссылку если она есть
         case .checkSearth: initObserverRaycast(true)                                // запуск обзервера на проверку корректности определения сцены
         default : do {}
