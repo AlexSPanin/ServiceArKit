@@ -30,7 +30,7 @@ struct ARViewUI: View {
                 Button {
                     viewModel.createdModel()
                 } label: {
-                    Text("Установить Модель")
+                    Text(viewModel.isLoad ? "Загрузка" : "Установить Модель")
                         .font(font)
                         .lineLimit(1)
                         .minimumScaleFactor(scale)
@@ -41,6 +41,7 @@ struct ARViewUI: View {
                         .background( mainRigth.cornerRadius(constants.corner))
                 }
                 .padding(.bottom, paddingBottom)
+                .disabled(viewModel.isLoad).opacity(viewModel.isLoad ? 0.3 : 1)
                 
             }
         }

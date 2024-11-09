@@ -90,3 +90,16 @@ let targetString: [Character] = [Character("$"),
                                  Character("+"),
                                  Character("~"),
                                  Character("?")]
+
+//
+//let nameEntitys: [String: String] = ["line": "line",
+//                                     "point": "point",
+//                                     "node": "node",
+//                                    "text": "text",
+//                                     "border": "border",
+//                                     "polygon": "polygon",
+//                                     "floor": "floor",
+//                                     "fence": "fence",
+//                                     
+//                                     
+//                                     
