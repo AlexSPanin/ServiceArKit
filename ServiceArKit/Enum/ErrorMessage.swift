@@ -16,3 +16,8 @@ enum ErrorMessage: Error {
         }
     }
 }
+
+/// Признаки для отработки типов ответа
+enum TypeRaycastError {
+    case no, querry, result
+}

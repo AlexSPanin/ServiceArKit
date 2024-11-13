@@ -211,6 +211,9 @@ extension ModelEntity {
         }
     }
     
+    
+    
+    
     //MARK: - private metods
     // проверка наличия файла возвращает URL
     private func checkFile(to file: String, completion: @escaping (URL?) -> Void) {

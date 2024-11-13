@@ -19,6 +19,24 @@ struct ARViewUI: View {
     private var paddingTextButtonTop: CGFloat { constants.view.height * 0.016 }
     private var paddingTextButtonLeading: CGFloat { constants.view.width * 0.016 }
     private var widthButton: CGFloat { constants.view.width * 0.78 }
+    private var text: String {
+        switch viewModel.statusAPP {
+        case .configure: return "Конфигурация"
+        case .finishConfig: return "Загрузить Модель"
+        case .loadModel: return "Загрузка"
+        case .finishLoadModel: return "Начать поиск"
+        case .searchScene, .checkScene: return "Поиск Плоскости"
+        case .observerScene: return "Определите место"
+        case .addModel: return "Установить"
+        default: return "Конфигурация"
+        }
+    }
+    private var isDisabled: Bool {
+        switch viewModel.statusAPP {
+        case .finishConfig, .finishLoadModel, .observerScene: return false
+            default: return true
+        }
+    }
     
     
     var body: some View {
@@ -28,9 +46,14 @@ struct ARViewUI: View {
             VStack(alignment: .center) {
                 Spacer()
                 Button {
-                    viewModel.createdModel()
+                    switch viewModel.statusAPP {
+                    case .finishConfig: viewModel.statusAPP = .loadModel
+                    case .finishLoadModel: viewModel.statusAPP = .searchScene
+                    case .observerScene: viewModel.statusAPP = .addModel
+                    default: do {}
+                    }
                 } label: {
-                    Text(viewModel.isLoad ? "Загрузка" : "Установить Модель")
+                    Text(text)
                         .font(font)
                         .lineLimit(1)
                         .minimumScaleFactor(scale)
@@ -41,15 +64,10 @@ struct ARViewUI: View {
                         .background( mainRigth.cornerRadius(constants.corner))
                 }
                 .padding(.bottom, paddingBottom)
-                .disabled(viewModel.isLoad).opacity(viewModel.isLoad ? 0.3 : 1)
+                .disabled(isDisabled ).opacity(isDisabled ? 0.3 : 1)
                 
             }
         }
         .ignoresSafeArea()
-        .onAppear {
-            viewModel.constant = constants
-            viewModel.configure()
-        }
-        
     }
 }

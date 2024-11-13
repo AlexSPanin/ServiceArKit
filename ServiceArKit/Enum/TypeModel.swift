@@ -64,3 +64,5 @@ enum TypeModel: Codable, CaseIterable {
         }
     }
 }
+
+

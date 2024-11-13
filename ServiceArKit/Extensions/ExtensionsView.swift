@@ -12,7 +12,7 @@ class ConstantSetting: ObservableObject {
     @Published var orientation: UIDeviceOrientation                  // ориентация устройства
     @Published var view: CGSize                                      // размер экрана устройства
     @Published var screen: CGFloat                                   // приведенная ширина экрана
-    @Published var midPoint: CGPoint                                 // срединная точка экрана
+                        
     @Published var scaleWidth: CGFloat                               // отношение ширины к базовой ширине
     @Published var scaleHeight: CGFloat                              // отношение высоты к базовой высоте
     @Published var isSmall: Bool                                     // признак малого экрана
@@ -32,7 +32,6 @@ class ConstantSetting: ObservableObject {
         let orientation = UIDevice.current.orientation
         let isLandscape = orientation.isLandscape
         let bounds = UIScreen.main.bounds
-        let midPoint = CGPoint(x: bounds.midX, y: bounds.midY)
         let width = isLandscape ? bounds.height : bounds.width
         let scaleWidth = width / (isLandscape ? base.height : base.width)
         let heigth = isLandscape ? bounds.width : bounds.height
@@ -45,7 +44,6 @@ class ConstantSetting: ObservableObject {
         self.orientation = orientation
         self.view = size
         self.screen = size.width * 0.95
-        self.midPoint = midPoint
         self.scaleWidth = scaleWidth
         self.scaleHeight = scaleHeight
         self.isSmall = isSmall
@@ -64,7 +62,6 @@ class ConstantSetting: ObservableObject {
         let orientation = UIDevice.current.orientation
         let isLandscape = orientation.isLandscape
         let bounds = UIScreen.main.bounds
-        let midPoint = CGPoint(x: bounds.midX, y: bounds.midY)
         let width = isLandscape ? max(bounds.height, bounds.width) : min(bounds.height, bounds.width)
         let scaleWidth = width / (isLandscape ? base.height : base.width)
         let heigth = isLandscape ? min(bounds.height, bounds.width) : max(bounds.height, bounds.width)
@@ -76,7 +73,6 @@ class ConstantSetting: ObservableObject {
         self.orientation = orientation
         self.view = size
         self.screen = size.width * 0.95
-        self.midPoint = midPoint
         self.scaleWidth = scaleWidth
         self.scaleHeight = scaleHeight
         self.isSmall = isSmall

@@ -12,6 +12,8 @@ let base: CGSize = CGSize(width: 300, height: 500)                      // кр�
 
 let scaleScreen = UIScreen.main.scale                                   // масштаб экрана устройства
 let native = UIScreen.main.nativeScale                                  // реальный масштаб экрана устройства
+let bounds = UIScreen.main.bounds
+let midPoint = CGPoint(x: bounds.midX, y: bounds.midY)                  // срединная точка экрана
 
 let yPositionScene: Float = -0.005                                        // базовая позиция сцены по вертикали в метрах чуть утоплена
 
