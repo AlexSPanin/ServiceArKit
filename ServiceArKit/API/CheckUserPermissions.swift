@@ -10,7 +10,6 @@ import AVFoundation
 
 /// Проверка прав доступа приложения к ресурсам устройства
 final class Permissions {
-    
     static let shared = Permissions()
     private init() {}
     

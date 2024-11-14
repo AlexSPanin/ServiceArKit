@@ -4,10 +4,10 @@
 //
 //  Created by Александр Панин on 13.11.2024.
 //
-import Foundation
+
 import RealityKit
 import SwiftUI
-import Metal
+
 
 /// Для формирования типовых фигур
 final class CreatorTypicalModels {

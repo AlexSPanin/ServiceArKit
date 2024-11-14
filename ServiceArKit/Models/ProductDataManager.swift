@@ -17,11 +17,18 @@ class ProductDataManager {
     ///   - doc: идендификатор карточки коллекции
     ///   - completion: карточка коллекции
     func loadCard(to doc: String?, completion: @escaping(Product?) -> Void) {
-        NetworkManager.shared.loadCardJson(lev0: .products, id0: doc, lev1: nil, id1: nil) { data in
-            guard let data = data else { return completion(nil)}
-            printMessage("Ответ от сервера:\n\(String(data: try! JSONSerialization.data(withJSONObject: data, options: .prettyPrinted), encoding: .utf8)!)", isPrint: self.isPrint)
-            let card = Product(json: data)
-            completion(card)
+        NetworkManager.shared.loadCardJson(lev0: .products, id0: doc, lev1: nil, id1: nil) { array in
+            guard let array = array else { return completion(nil)}
+            do {
+                
+                let data = try JSONSerialization.data(withJSONObject: array, options: .prettyPrinted)
+                printMessage("\(data)")
+                let product = try JSONDecoder().decode(Product.self, from: data)
+                completion(product)
+            } catch {
+                completion(nil)
+            }
         }
     }
 }
+

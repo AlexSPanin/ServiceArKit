@@ -216,7 +216,7 @@ extension ARView {
     /// - Parameter simd: матрица координат
     func positionMovePoint(_ simd: simd_float4x4?) {
         guard let simd = simd else { return }
-        printMessage("Новая позиция \(simd.position())")
+        printMessage("Новая позиция \(simd.position())", isPrint: false)
         getAnchorEntity(.pointAnchor) { anchor in anchor?.setTransformMatrix(simd, relativeTo: nil) }
     }
     

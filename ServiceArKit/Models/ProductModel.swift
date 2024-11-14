@@ -181,7 +181,7 @@ struct Product: Codable {
     }
     
     public init(from decoder: Decoder) throws {
-        let isPrint: Bool = false
+        let isPrint: Bool = true
         let container = try decoder.container(keyedBy: CodingKeys.self)
         do {
             self.id = try container.decode(String.self, forKey: .id)
@@ -476,10 +476,7 @@ struct Product: Codable {
         if !self.imageThumbnail.isEmpty {data["imageThumbnail"] = self.imageThumbnail }
         if !self.imagesProduct.isEmpty {data["imagesProduct"] = self.imagesProduct }
         if !self.audio.isEmpty {data["audio"] = self.audio }
-        
-        if !self.elements.isEmpty {
-            data["elements"] = self.elements.map { $0.getJson() }
-        }
+        if !self.elements.isEmpty { data["elements"] = self.elements.map { $0.getJson() } }
         
         data["filters"] = self.filters.getJson()
         return data as [String : Any]

@@ -10,7 +10,7 @@
 ///   - message: сообщение
 ///   - isPrint: локальный признак разрешения печати
 func printMessage(_ message: String?, isPrint: Bool = true ) {
-    guard isPrinting, isPrint, let message = message else { return }
+    guard (isPrinting || isPrint) , let message = message else { return }
     print(message)
 }
 

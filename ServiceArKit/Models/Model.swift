@@ -80,104 +80,162 @@ class Model {
 //        card.rating = card.count != 0 ? String(format: "%.1f", Float(card.sum) / Float(card.count)) : ""
 //        changeRating()
 //    }
-//    
+//
+    
+    func asyncLoadEntity(_ url: URL?, completion: @escaping (Entity?) -> Void ) {
+        guard let url = url else { return completion(nil) }
+        if #available(iOS 18.0, *) {
+            Task {
+                do {
+                    let entity = try await Entity.init(contentsOf: url)
+                    completion(entity)
+                } catch {
+                    completion(nil)
+                }
+            }
+        } else {
+            self.cancellable = Entity.loadAsync(contentsOf: url)
+                .sink (receiveCompletion: { loadCompletion in
+                    switch loadCompletion {
+                    case .failure(_):  completion(nil)
+                    case .finished: do {}
+                    }
+                })
+            { entity in  completion(entity) }
+        }
+    }
+    
+    
+//    private func createdModelEntity(_ entity: ModelEntity) {
+//        entity.name = name
+//        let modelEntity = ModelEntity()      // определяем родительское modelEntity
+//        modelEntity.addChild(entity)
+//        modelEntity.name = entity.name
+//        
+//        let entityBounds = entity.visualBounds(relativeTo: modelEntity)
+//        // для строений не устанавливаем коллизии взаимодействия
+//        if type != "home" {
+//            // для строений не устанавливаем коллизии взаимодействия
+//            modelEntity.collision = CollisionComponent(shapes: [ShapeResource.generateBox(size: entityBounds.extents).offsetBy(translation: entityBounds.center)])
+//            modelEntity.generateCollisionShapes(recursive: true)
+//        } else {
+//            // для Домов расчитали размер плоскости
+//            let widthX = entityBounds.max.x - entityBounds.min.x
+//            let widthZ = entityBounds.max.z - entityBounds.min.z
+//            // расчитали вертикальное смещение плоскости
+//            var offset = entityBounds.center
+//            offset.y = entityBounds.min.y
+//            // создали плоскость взаимодействия
+//            modelEntity.collision = CollisionComponent(shapes: [ShapeResource.generateBox(width: widthX, height: 0.001, depth: widthZ).offsetBy(translation: offset)])
+//        }
+//        
+//        // если у модели есть слои то разворачиваем базовые цвета и текстуры
+//        if isLayers {
+//            let myGroup = DispatchGroup()
+//            self.card.elements.forEach { part in
+//                let color = part.addColors.first(where: {$0.key == part.select || $0.key == part.start})?.value
+//                let texture = part.addTexture.first(where: {$0.key == part.select || $0.key == part.start})?.value
+//                myGroup.enter()
+//                modelEntity.changeLayersFile(shader: shader,
+//                                             color: color,
+//                                             texture: texture ,
+//                                             textures: part.textures,
+//                                             namePart: part.namePart) { message in
+//                    printMessage(message.message)
+//                    myGroup.leave()
+//                }
+//            }
+//            myGroup.notify(queue: .main) {
+//                self.modelEntity = modelEntity
+//                self.modelEntity?.scale *= self.card.scaleCompensation
+//                self.modelEntity?.name = name
+//                completion(.ok("Модель \(name) загружена"))
+//            }
+//        } else {
+//            self.modelEntity = modelEntity
+//            self.modelEntity?.scale *= self.card.scaleCompensation
+//            self.modelEntity?.name = name
+//            completion(.ok("Модель \(name) загружена"))
+//        }
+//    }
+    
+    
+    
     /// метод асинхронной загрузки 3D моделей
     /// - Parameters:
     ///   - library: библиотека Metall
     ///   - completion: опциональный комплишн
-    func asyncLoadEntity(shader: CustomMaterial.SurfaceShader?, completion: @escaping (ErrorMessage) -> Void ) {
+    func asyncLoadModelEntity(_ url: URL?, shader: CustomMaterial.SurfaceShader?, completion: @escaping (ErrorMessage) -> Void ) {
         // определяем типы и значения
         let fileName = self.card.model
         let type = self.card.typeModel
         let isLayers = self.card.isLayers
         let name = self.card.name[language] ?? "нет названия"
-        printMessage("Начало загрузки Enity \(String(describing: self.card.name[language])) файл \(fileName) id \(self.card.id)")
-        checkLocalFile(to: fileName) { url in
-            guard let url = url else { return completion(.error("пустой адрес загрузки")) }
-            self.cancellable = ModelEntity.loadAsync(contentsOf: url)
-                .sink (receiveCompletion: { loadCompletion in
-                    switch loadCompletion {
-                    case .failure(let error):  completion(.error(error.localizedDescription))
-                    case .finished: do {}
-                    }
-                })
-            { entity in
-                entity.name = name
-                let modelEntity = ModelEntity()      // определяем родительское modelEntity
-                modelEntity.addChild(entity)
-                modelEntity.name = entity.name
-                
-                let entityBounds = entity.visualBounds(relativeTo: modelEntity)
+        printMessage("Начало загрузки Enity \(name) файл \(fileName) id \(self.card.id)")
+        self.asyncLoadEntity(url) { entity in
+            guard let entity = entity else { return completion(.error("Модель \(name) не загружена"))}
+            entity.name = name
+            let modelEntity = ModelEntity()      // определяем родительское modelEntity
+            modelEntity.addChild(entity)
+            modelEntity.name = entity.name
+            
+            let entityBounds = entity.visualBounds(relativeTo: modelEntity)
+            // для строений не устанавливаем коллизии взаимодействия
+            if type != "home" {
                 // для строений не устанавливаем коллизии взаимодействия
-                if type != "home" {
-                    // для строений не устанавливаем коллизии взаимодействия
-                    modelEntity.collision = CollisionComponent(shapes: [ShapeResource.generateBox(size: entityBounds.extents).offsetBy(translation: entityBounds.center)])
-                    modelEntity.generateCollisionShapes(recursive: true)
-                } else {
-                    // для Домов расчитали размер плоскости
-                    let widthX = entityBounds.max.x - entityBounds.min.x
-                    let widthZ = entityBounds.max.z - entityBounds.min.z
-                    // расчитали вертикальное смещение плоскости
-                    var offset = entityBounds.center
-                    offset.y = entityBounds.min.y
-                    // создали плоскость взаимодействия
-                    modelEntity.collision = CollisionComponent(shapes: [ShapeResource.generateBox(width: widthX, height: 0.001, depth: widthZ).offsetBy(translation: offset)])
+                modelEntity.collision = CollisionComponent(shapes: [ShapeResource.generateBox(size: entityBounds.extents).offsetBy(translation: entityBounds.center)])
+                modelEntity.generateCollisionShapes(recursive: true)
+            } else {
+                // для Домов расчитали размер плоскости
+                let widthX = entityBounds.max.x - entityBounds.min.x
+                let widthZ = entityBounds.max.z - entityBounds.min.z
+                // расчитали вертикальное смещение плоскости
+                var offset = entityBounds.center
+                offset.y = entityBounds.min.y
+                // создали плоскость взаимодействия
+                modelEntity.collision = CollisionComponent(shapes: [ShapeResource.generateBox(width: widthX, height: 0.001, depth: widthZ).offsetBy(translation: offset)])
+            }
+            
+            // если у модели есть слои то разворачиваем базовые цвета и текстуры
+            if isLayers {
+                printMessage("Enity \(name) со слоями начало разварачивания слоев \(self.card.elements.count)")
+                let myGroup = DispatchGroup()
+                self.card.elements.forEach { part in
+                    let color = part.addColors.first(where: {$0.key == part.select || $0.key == part.start})?.value
+                    let texture = part.addTexture.first(where: {$0.key == part.select || $0.key == part.start})?.value
+                    myGroup.enter()
+                    printMessage("\(part.namePart) ")
+                    modelEntity.changeLayersFile(shader: shader,
+                                                 color: color,
+                                                 texture: texture ,
+                                                 textures: part.textures,
+                                                 namePart: part.namePart) { message in
+                        printMessage(message.message, isPrint: true)
+                        myGroup.leave()
+                    }
                 }
-                
-                // если у модели есть слои то разворачиваем базовые цвета и текстуры
-                if isLayers {
-                   let myGroup = DispatchGroup()
-                    self.card.elements.forEach { part in
-                        let color = part.addColors.first(where: {$0.key == part.select || $0.key == part.start})?.value
-                        let texture = part.addTexture.first(where: {$0.key == part.select || $0.key == part.start})?.value
-                       myGroup.enter()
-                        modelEntity.changeLayersFile(shader: shader,
-                                                     color: color,
-                                                     texture: texture ,
-                                                     textures: part.textures,
-                                                     namePart: part.namePart) { message in
-                            printMessage(message.message)
-                            myGroup.leave()
-                        }
-                    }
-                    myGroup.notify(queue: .main) {
-                        self.modelEntity = modelEntity
-                        self.modelEntity?.scale *= self.card.scaleCompensation
-                        self.modelEntity?.name = name
-                        completion(.ok("Модель \(name) загружена"))
-                    }
-                } else {
+                myGroup.notify(queue: .main) {
                     self.modelEntity = modelEntity
                     self.modelEntity?.scale *= self.card.scaleCompensation
                     self.modelEntity?.name = name
-                    completion(.ok("Модель \(name) загружена"))
+                    completion(.ok("Модель \(name) со слоями загружена"))
                 }
+            } else {
+                self.modelEntity = modelEntity
+                self.modelEntity?.scale *= self.card.scaleCompensation
+                self.modelEntity?.name = name
+                completion(.ok("Модель \(name) загружена"))
             }
         }
     }
 }
 
+
+
+
 //MARK: - приватные методы
 extension Model {
-
-    /// проверка наличия файла в локальном хранилище и перенос при необходимости
-    /// - Parameters:
-    ///   - name: имя файла
-    ///   - completion: опциональный полный URL
-    private func checkLocalFile(to name: String, completion: @escaping (URL?) -> Void) {
-        guard let directory = fileDirectory.url, !name.isEmpty else { return completion(nil) }
-        let url = directory.appendingPathComponent(name)
-        printMessage("Восстановленный адрес \(url))")
-        guard !local.checkExistFile(to: name, type: fileDirectory) else {  return completion(url)}
-        printMessage("Файл не найден \(name)")
-        network.loadFile(type: .usdz, file: name) { data in
-            guard let data = data else { return completion(nil) }
-            self.local.saveFileData(to: name, type: fileDirectory, data: data)
-            self.loadingFiles[name] = (TypeUpload.usdz, true)
-            completion(url)
-        }
-    }
-
+    
     /// метод проверки наличия кнопки изменения цветов
     private func checkColorButton() {
         var checkColorButton = false
@@ -190,8 +248,8 @@ extension Model {
     
     /// изменения статуса любимый
     private func changeHeart() {
-//        guard let index = db.products.firstIndex(where: {$0.collection.id == card.collection.id}) else { return }
-//        db.products[index].collection.showHeart = card.collection.showHeart
-//        db.saveProducts()
+        //        guard let index = db.products.firstIndex(where: {$0.collection.id == card.collection.id}) else { return }
+        //        db.products[index].collection.showHeart = card.collection.showHeart
+        //        db.saveProducts()
     }
 }

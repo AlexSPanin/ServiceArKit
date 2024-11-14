@@ -19,6 +19,7 @@ final class ARViewModel: ObservableObject {
         case configure            // стартовая конфигурация
         case finishConfig
         case loadModel            // загрузка модели
+        case createdModel
         case finishLoadModel
         case searchScene          // поиск плоскости
         case checkScene           // проверка сцены
@@ -36,6 +37,7 @@ final class ARViewModel: ObservableObject {
     var library: MTLLibrary?                                // библиотека для metal
     var surfaceShader: CustomMaterial.SurfaceShader?
     var product: Product?
+    var url: URL? { didSet { statusAPP = .createdModel } }
     
     private let point: ModelEntity = CreatorTypicalModels.shared.createdMovePoint(size: 0.05, color: .yellow)
     private let scene: ModelEntity = CreatorTypicalModels.shared.createdPlane(size: CGSize(width: 10, height: 10),
@@ -53,11 +55,12 @@ final class ARViewModel: ObservableObject {
     private func changeStatusAPP() {
         printMessage("Статус приложения \(statusAPP)", isPrint: isPrint)
         switch statusAPP {
-        case .loadModel: createdModel()                  // подготовка модели
-        case .searchScene:  configureResetTracking()     // запуск поиска сцены
+        case .loadModel: loadFilesModel(idCard: idProduct)  // подготовка модели
+        case .createdModel: createdModel()
+        case .searchScene:  configureResetTracking()        // запуск поиска сцены
         case .checkScene: initObserverRaycast(true)
-        case .observerScene : startObserverScene()       // запуск обзервера сцены
-        case .addModel: pressAddEntity()                 // установка модели
+        case .observerScene : startObserverScene()         // запуск обзервера сцены
+        case .addModel: pressAddEntity()                   // установка модели
         default : do {}
         }
     }
@@ -133,19 +136,7 @@ final class ARViewModel: ObservableObject {
     
     private func pressAddEntity()  {
         guard let selectedModel = self.selectedModel, let modelEntity = selectedModel.modelEntity else { return }
-        guard let type = TypeModel.allCases.first(where: {$0.label == selectedModel.card.typeModel }) else { return }
-        let product = selectedModel.card
-        let elements = selectedModel.card.elements
-        entity = ModelProperties(idVendor: product.idVendor,
-                                 idCategory: product.idCategory,
-                                 idProduct: product.id,
-                                 model: product.model,
-                                 typeModel: type,
-                                 baseY: product.basePositionY)
-        entity?.parts = elements
-        entity?.audio = product.audio
-        entity?.modelGlb = product.modelGlb
-        entity?.modelFields = product.modelFields
+        entity = ModelProperties(product: selectedModel.card)
         arView.placeEntity(modelEntity, entity, simd: arView.getRaycast(midPoint) ) { properties in
             self.entity = properties
             self.initSceneObserver(isInit: false, note: "placeEntity")
@@ -153,11 +144,10 @@ final class ARViewModel: ObservableObject {
     }
     
     private func createdModel() {
-        loadFilesModel(idCard: idProduct) { [self] message in
-            printMessage(message.message, isPrint: isPrint)
-            guard let product = product, product.typeModel == "entity" else { return }
-            let model = Model(card: product)
-            model.asyncLoadEntity(shader: surfaceShader) { message in
+        guard let product = product, product.typeModel == "entity" else { return }
+        let model = Model(card: product)
+        model.initModel { model in
+            model.asyncLoadModelEntity(self.url, shader: self.surfaceShader) { message in
                 printMessage(message.message)
                 switch message {
                 case .ok:
@@ -168,14 +158,17 @@ final class ARViewModel: ObservableObject {
             }
         }
     }
+
     
-    private func loadFilesModel(idCard: String, completion: @escaping(ErrorMessage) -> Void) {
+    private func loadFilesModel(idCard: String) {
         ProductDataManager.shared.loadCard(to: idProduct) { card in
+            printMessage("\(card)")
             self.product = card
-            guard let file = card?.model, !file.isEmpty else { return completion(.error("ОШИБКА: в карточке не прописан файл модели")) }
-            guard !FileAppManager.shared.checkExistFile(to: file, type: fileDirectory) else { return completion(.ok("ОК: файл в локальном хранилище")) }
+            guard let file = card?.model, !file.isEmpty else { return }
+            guard let url = fileDirectory.url?.appendingPathComponent(file) else { return }
+            guard !FileAppManager.shared.checkExistFile(to: file, type: fileDirectory) else { return self.url = url }
             printMessage("Начало загрузки файла модели из сети \(file)", isPrint: self.isPrint)
-            NetworkManager.shared.loadFileWriteLocal(type: .usdz, file: file, local: fileDirectory) { message in completion(message) }
+            NetworkManager.shared.loadFileWriteLocal(type: .usdz, file: file, local: fileDirectory) { message in self.url = url }
         }
     }
     

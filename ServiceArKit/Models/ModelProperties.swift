@@ -72,6 +72,19 @@ struct ModelProperties: Codable {
         self.baseY = baseY
     }
     
+    init (product: Product) {
+        self.idVendor = product.idVendor
+        self.idCategory = product.idCategory
+        self.idProduct = product.id
+        self.model = product.model
+        self.typeModel = TypeModel.allCases.first(where: {$0.label == product.typeModel }) ?? .model
+        self.baseY = product.basePositionY
+        self.parts = product.elements
+        self.audio = product.audio
+        self.modelGlb = product.modelGlb
+        self.modelFields = product.modelFields
+    }
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(String.self, forKey: .id)
