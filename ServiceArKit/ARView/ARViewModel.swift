@@ -18,8 +18,10 @@ final class ARViewModel: ObservableObject {
         case loadView             // запуск приложения
         case configure            // стартовая конфигурация
         case finishConfig
-        case loadModel            // загрузка модели
+        case loadCard            // загрузка модели
         case createdModel
+        case finishCreatedModel
+        case loadModel
         case finishLoadModel
         case searchScene          // поиск плоскости
         case checkScene           // проверка сцены
@@ -29,15 +31,14 @@ final class ARViewModel: ObservableObject {
     
     @Published var arView: ARView!                                                           // основное вью
     @Published var statusAPP: StatusAPP = .loadView { didSet { changeStatusAPP() }}          // статус работы приложения
-    @Published var entity: ModelProperties?
-    @Published var selectedModel: Model?                   // выбранная и уже загруженная модель из каталога
+    var entity: ModelProperties?
+    var selectedModel: Model?                   // выбранная и уже загруженная модель из каталога
     
     var sceneObserver: Cancellable?                         // управление включением и выключением обзервера
     var device: MTLDevice?                                  // для инициализации metal
     var library: MTLLibrary?                                // библиотека для metal
     var surfaceShader: CustomMaterial.SurfaceShader?
     var product: Product?
-    var url: URL? { didSet { statusAPP = .createdModel } }
     
     private let point: ModelEntity = CreatorTypicalModels.shared.createdMovePoint(size: 0.05, color: .yellow)
     private let scene: ModelEntity = CreatorTypicalModels.shared.createdPlane(size: CGSize(width: 10, height: 10),
@@ -55,8 +56,22 @@ final class ARViewModel: ObservableObject {
     private func changeStatusAPP() {
         printMessage("Статус приложения \(statusAPP)", isPrint: isPrint)
         switch statusAPP {
-        case .loadModel: loadFilesModel(idCard: idProduct)  // подготовка модели
+        case .loadCard: loadProdactCard(idCard: idProduct)  // подготовка модели
         case .createdModel: createdModel()
+        case .finishCreatedModel: statusAPP = .loadModel
+        case .loadModel:
+            Task {
+                await loadModelEntity { message in
+                    printMessage(message.message, isPrint: self.isPrint)
+                    switch message {
+                    case .error(_):
+                        self.statusAPP = .createdModel
+                    default:
+                        self.statusAPP = .finishLoadModel
+                    }
+                }
+            }
+        case .finishLoadModel: statusAPP = .searchScene
         case .searchScene:  configureResetTracking()        // запуск поиска сцены
         case .checkScene: initObserverRaycast(true)
         case .observerScene : startObserverScene()         // запуск обзервера сцены
@@ -69,6 +84,7 @@ final class ARViewModel: ObservableObject {
     private func configure() {
         printMessage("Начало конфигурации", isPrint: isPrint)
         AuthUserManager.shared.registerAnon { _ in }
+        FileAppManager.shared.clearLocal(fileDirectory)
         guard Permissions.shared.checkPermissions(type: .video) else { return }
         statusAPP = .configure
         printMessage("Начало конфигурации плоскости работы")
@@ -143,32 +159,34 @@ final class ARViewModel: ObservableObject {
         }
     }
     
-    private func createdModel() {
-        guard let product = product, product.typeModel == "entity" else { return }
-        let model = Model(card: product)
-        model.initModel { model in
-            model.asyncLoadModelEntity(self.url, shader: self.surfaceShader) { message in
-                printMessage(message.message)
-                switch message {
-                case .ok:
-                    self.selectedModel = model
-                    self.statusAPP = .finishLoadModel
-                default: do {}
-                }
+    private func loadModelEntity(completion: @escaping (ErrorMessage) -> Void ) async  {
+        guard let model = selectedModel else { return completion(.error("модель не определена")) }
+        model.asyncLoadModelEntity(shader: self.surfaceShader) { message in
+            printMessage(message.message)
+            switch message {
+            case .ok:
+                self.selectedModel = model
+                completion(.ok("модель определена"))
+            default: completion(message)
             }
         }
     }
 
     
-    private func loadFilesModel(idCard: String) {
+    private func createdModel() {
+        guard let product = product, product.typeModel == "entity" else { return }
+        let model = Model(card: product)
+        model.initModel { model in
+            self.selectedModel = model
+            self.statusAPP = .finishCreatedModel
+        }
+    }
+
+    
+    private func loadProdactCard(idCard: String) {
         ProductDataManager.shared.loadCard(to: idProduct) { card in
-            printMessage("\(card)")
             self.product = card
-            guard let file = card?.model, !file.isEmpty else { return }
-            guard let url = fileDirectory.url?.appendingPathComponent(file) else { return }
-            guard !FileAppManager.shared.checkExistFile(to: file, type: fileDirectory) else { return self.url = url }
-            printMessage("Начало загрузки файла модели из сети \(file)", isPrint: self.isPrint)
-            NetworkManager.shared.loadFileWriteLocal(type: .usdz, file: file, local: fileDirectory) { message in self.url = url }
+            self.statusAPP = .createdModel
         }
     }
     

@@ -132,16 +132,16 @@ final class FileAppManager {
     }
     
     /// удаление отчистка из локальной директории всех файлов
-    func clearLocal() {
+    func clearLocal(_ type: TypeDirectory) {
         let notDelete: [String] = ["google-sdks-events"]
-        let files = checkDirectory(to: .assets)
+        let files = checkDirectory(to: type)
         files?.forEach { file in
             var isDelete = true
             notDelete.forEach { not in
                 if file.contains(not), isDelete { isDelete = false }
             }
             if isDelete {
-                deleteFileLocal(to: file, type: .assets) { message in printMessage(message.message)  }
+                deleteFileLocal(to: file, type: type) { message in printMessage(message.message)  }
             }
         }
     }

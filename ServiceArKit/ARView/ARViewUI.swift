@@ -21,10 +21,11 @@ struct ARViewUI: View {
     private var widthButton: CGFloat { constants.view.width * 0.78 }
     private var text: String {
         switch viewModel.statusAPP {
-        case .configure: return "Конфигурация"
-        case .finishConfig: return "Загрузить Модель"
-        case .loadModel: return "Загрузка"
-        case .finishLoadModel: return "Начать поиск"
+        case .configure: return "Конфигурация ARView"
+        case .finishConfig: return "Загрузить Карточку"
+        case .loadCard: return "Загрузка Карточки"
+        case .createdModel, .finishCreatedModel : return "Подготовка Модели"
+        case .loadModel, .finishLoadModel: return "Загрузка файлов Модели"
         case .searchScene, .checkScene: return "Поиск Плоскости"
         case .observerScene: return "Определите место"
         case .addModel: return "Установить"
@@ -33,7 +34,7 @@ struct ARViewUI: View {
     }
     private var isDisabled: Bool {
         switch viewModel.statusAPP {
-        case .finishConfig, .finishLoadModel, .observerScene: return false
+        case .finishConfig, .finishCreatedModel, .observerScene: return false
             default: return true
         }
     }
@@ -47,7 +48,7 @@ struct ARViewUI: View {
                 Spacer()
                 Button {
                     switch viewModel.statusAPP {
-                    case .finishConfig: viewModel.statusAPP = .loadModel
+                    case .finishConfig: viewModel.statusAPP = .loadCard
                     case .finishLoadModel: viewModel.statusAPP = .searchScene
                     case .observerScene: viewModel.statusAPP = .addModel
                     default: do {}
@@ -64,7 +65,7 @@ struct ARViewUI: View {
                         .background( mainRigth.cornerRadius(constants.corner))
                 }
                 .padding(.bottom, paddingBottom)
-                .disabled(isDisabled ).opacity(isDisabled ? 0.3 : 1)
+                .disabled(isDisabled ).opacity(isDisabled ? 0.4 : 1)
                 
             }
         }

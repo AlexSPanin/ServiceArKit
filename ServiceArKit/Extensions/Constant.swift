@@ -24,14 +24,10 @@ let iPad: Bool = nameDevice.contains("iPad")                              // п�
 
 let nameLogo = "ServiceArKit_logo"
 let language = "RUS"
-let idProduct: String = "4aH8luXNc0aUAaqGxrw9"                   // id карточки товара для загрузки модели
+let idProduct: String = "512B4379-3EFC-481D-A702-50BBF88F2030"                   // id карточки товара для загрузки модели
 let maxData: Int64 = 10 * 1024 * 1024                            // максимальный объем файла для прямого скачивания
 let userDefaults = UserDefaults.standard                         // краткая ссылка
 let fileDirectory: TypeDirectory = .doc                          // директория для хранения файлов документов, изображения и моделей
-//let local = FileAppManager.shared                              // краткая ссылка на менеджер по работе с локальными файлами
-//let network = NetworkManager.shared                            // краткая ссылка на менеджер по работе с сетью
-//let db = DataBase.shared                                       // краткая ссылка на менеджер по работе с локальным кешем
-//let storage = StorageManager.shared                            // краткая ссылка на менеджер по работе с локальным стораджем
 
 // управление печатью в сообщениях
 let isPrinting: Bool = true                                    // единый признак печати сообщений в методах
@@ -105,3 +101,22 @@ let targetString: [Character] = [Character("$"),
 //                                     
 //                                     
 //                                     
+
+//part0 - голова
+//part1 - глаза
+//part2 - шея
+//part3 - тело
+//part4 - плечо правое
+//part5 - плечо левое
+//part6 - предплечье правое
+//part7 - предплечье левое
+//part8- кисть левая
+//part9 - кисть правая
+//part10- таз
+//part11- бедро правое
+//part12- бедро левое
+//part13- голень правая
+//part14- голень левая
+//part15- стопа правая
+//part16- стопа левая
+//part17- волосы

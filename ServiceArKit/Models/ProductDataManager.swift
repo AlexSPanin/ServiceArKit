@@ -9,7 +9,6 @@ import SwiftUI
 
 class ProductDataManager {
     static let shared = ProductDataManager()
-    private let isPrint: Bool = false
     private init() {}
     
     /// Загрузка карточки коллекции
@@ -17,16 +16,14 @@ class ProductDataManager {
     ///   - doc: идендификатор карточки коллекции
     ///   - completion: карточка коллекции
     func loadCard(to doc: String?, completion: @escaping(Product?) -> Void) {
-        NetworkManager.shared.loadCardJson(lev0: .products, id0: doc, lev1: nil, id1: nil) { array in
-            guard let array = array else { return completion(nil)}
-            do {
-                
-                let data = try JSONSerialization.data(withJSONObject: array, options: .prettyPrinted)
-                printMessage("\(data)")
-                let product = try JSONDecoder().decode(Product.self, from: data)
+        NetworkManager.shared.loadCardJson(lev0: .products, id0: doc, lev1: nil, id1: nil) { data in
+            guard let data = data else { return completion(nil)}
+            var product = Product(json: data)
+            NetworkManager.shared.loadCollectionJson(lev0: .products, id0: doc, lev1: .elements) { data in
+                var cards = [ProductPart]()
+                data?.forEach{ value in cards.append(ProductPart(json: value)) }
+                product.elements = cards
                 completion(product)
-            } catch {
-                completion(nil)
             }
         }
     }
