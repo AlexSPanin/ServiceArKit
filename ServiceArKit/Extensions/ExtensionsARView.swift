@@ -100,6 +100,29 @@ extension ARView {
         return position
     }
     
+    func getPartsEntity(_ model: String?, parts: [String] , completion: @escaping([ModelEntity]) -> Void) {
+        guard !parts.isEmpty else { return completion([]) }
+        getEntity(model) { model in
+            guard let model = model else { return completion([]) }
+            var models: [ModelEntity] = []
+            parts.forEach { part in
+                if let modelEntity = model.findEntity(named: part) as? ModelEntity {
+                    models.append(modelEntity)
+                }
+            }
+            completion(models)
+        }
+    }
+    
+    func getEntity(_ name: String?, completion: @escaping(ModelEntity?) -> Void) {
+        getModelEntity(.anchor, .scene) { scene in
+            guard let name = name, let model = scene?.findEntity(named: name) as? ModelEntity else { return completion(nil) }
+            completion(model)
+        }
+    }
+    
+    
+    
     
     func placeEntity (_ entity: ModelEntity?, _ properties: ModelProperties?, simd: simd_float4x4?, completion: @escaping(ModelProperties?) -> Void) {
         guard let modelEntity = entity, var properties = properties , let position = simd?.position() else { return completion(nil) }

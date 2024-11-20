@@ -5,6 +5,9 @@
 //  Created by Александр Панин on 04.10.2024.
 //
 
+import SwiftUI
+
+
 /// Печать сообщения для отладки
 /// - Parameters:
 ///   - message: сообщение

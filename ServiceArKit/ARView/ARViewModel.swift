@@ -4,7 +4,7 @@
 //
 //  Created by Александр Панин on 22.10.2024.
 //
-
+import Foundation
 import SwiftUI
 import RealityKit
 import ARKit
@@ -12,46 +12,161 @@ import MetalKit
 import Combine
 
 final class ARViewModel: ObservableObject {
+    enum AxisModel {
+        case x, y, z
+    }
+    
+    
+    enum PartModel: String, CaseIterable {
+        enum Parts { case head, body, leftHand, rightHand, leftFoot, rightFoot }
+        case model = ""                   // для опознования основной модели
+        case shoulder = "part17"          //part17- волосы
+        case head = "part0"               //part0 - голова
+        case eyes = "part1"               //part1 - глаза
+        case neck = "part2"               //part2 - шея
+        case body = "part3"               //part3 - тело
+        case leftShoulder = "part5"       //part5 - плечо левое
+        case rightShoulder = "part4"      //part4 - плечо правое
+        case leftForearm = "part7"        //part7 - предплечье левое
+        case rightForearm = "part6"       //part6 - предплечье правое
+        case leftHand = "part8"           //part8- кисть левая
+        case rightHand = "part9"          //part9 - кисть правая
+        case pelpus = "part10"            //part10- таз
+        case leftThigh = "part12"         //part12- бедро левое
+        case rightThigh = "part11"        //part11- бедро правое
+        case leftShin = "part14"          //part14- голень левая
+        case rightShin = "part13"         //part13- голень правая
+        case leftFoot = "part16"          //part16- стопа левая
+        case rightFoot = "part15"         //part15- стопа правая
+        
+        var part: String { rawValue }
+        
+        func parts(_ parts: Parts ) -> [PartModel] {
+            switch parts {
+            case .head: return [.head, .eyes, .shoulder]
+            case .body: return [.neck, .body, .pelpus]
+            case .leftHand: return [.leftShoulder, .leftForearm, .leftHand]
+            case .rightHand: return [.rightShoulder, .rightForearm, .rightHand]
+            case .leftFoot: return [.leftThigh, .leftShin, .leftFoot]
+            case .rightFoot: return [.rightThigh, .rightShin, .rightFoot]
+            }
+        }
+    }
     
     /// Статусы работы приложения
     enum StatusAPP {
         case loadView             // запуск приложения
         case configure            // стартовая конфигурация
-        case finishConfig
-        case loadCard            // загрузка модели
-        case createdModel
-        case finishCreatedModel
-        case loadModel
-        case finishLoadModel
+        case finishConfig         // завершение конфигурации
+        case loadCard             // загрузка продуктовой карточки
+        case createdModel         // создание модели
+        case finishCreatedModel   // окончание создания модели
+        case loadModel            // загрузка файлов модели
+        case finishLoadModel      // окончание загрузки файлов модели
         case searchScene          // поиск плоскости
         case checkScene           // проверка сцены
         case observerScene        // наблюдение за сценой
         case addModel             // установить модель
+        case useModel             // использование модели
     }
+    
+    enum Movement {
+        case no, move, rotateLeft, rotateRigth, scale
+    }
+    
+    struct SimdPart {
+        let part: PartModel
+        let position: SIMD3<Float>
+    }
+    
+    let parts = PartModel.model
     
     @Published var arView: ARView!                                                           // основное вью
     @Published var statusAPP: StatusAPP = .loadView { didSet { changeStatusAPP() }}          // статус работы приложения
-    var entity: ModelProperties?
-    var selectedModel: Model?                   // выбранная и уже загруженная модель из каталога
+    @Published var movementModel: Movement = .no { didSet { changeMovementModel(parts.parts(.head)) } }
     
+    
+    
+    var product: Product?                                   // продуктовая карточка
+    var entity: ModelProperties?                            // свойста 3Д модели
+    var selectedModel: Model?                               // выбранная и уже загруженная модель из каталога
     var sceneObserver: Cancellable?                         // управление включением и выключением обзервера
     var device: MTLDevice?                                  // для инициализации metal
     var library: MTLLibrary?                                // библиотека для metal
-    var surfaceShader: CustomMaterial.SurfaceShader?
-    var product: Product?
-    
+    var surfaceShader: CustomMaterial.SurfaceShader?        // поверхностный шрейдер для Metall
+    private let coachingOverlay = ARCoachingOverlayView()   // управление поиском плоскостей
+    private let isPrint: Bool = true                        // признак печати уведомлений
+    // вспомогательные модели
     private let point: ModelEntity = CreatorTypicalModels.shared.createdMovePoint(size: 0.05, color: .yellow)
     private let scene: ModelEntity = CreatorTypicalModels.shared.createdPlane(size: CGSize(width: 10, height: 10),
                                                                               color: .white, opacity: 0.0)
-    private let coachingOverlay = ARCoachingOverlayView()           // управление поиском плоскостей
-    private let isPrint: Bool = true                                // признак печати уведомлений
-    
     init() {
         printMessage("Инициализация ARViewModel", isPrint: isPrint)
         arView = ARView(frame: .zero)
         initializeMetal()
         configure()
     }
+    
+    func changeMovementModel(_ parts: [PartModel]) {
+        switch movementModel {
+        case .no:
+            do {}
+        case .move:
+            do {}
+        case .rotateLeft:
+            rotationModel(axis: .y, value: .pi/4, duration: 1, parts: parts)
+        case .rotateRigth:
+            rotationModel(axis: .y, value: -.pi/4, duration: 1, parts: parts)
+        case .scale:
+            do {}
+        }
+        
+    }
+    
+   private func rotationModel(axis: AxisModel, value: Float, duration: TimeInterval, parts: [PartModel]) {
+        guard !parts.isEmpty else { return }
+        let models = parts.map { $0.rawValue }
+        let transform = Transform(pitch: axis == .x ? value : 0,
+                                  yaw: axis == .y ? value : 0,
+                                  roll: axis == .z ? value : 0)
+        arView.getPartsEntity(entity?.nameID, parts: models) { models in
+            guard !models.isEmpty else { return }
+            models.forEach { model in
+                model.move(to: transform, relativeTo: model, duration: duration, timingFunction: .easeInOut)
+            }
+        }
+    }
+    
+//    
+//    
+//    
+//     func turnLeft() {
+//        printMessage("Поворот влево", isPrint: isPrint)
+//        arView.getPartEntity(entity?.nameID, part: "part0") { model in
+//            guard let model = model else { return }
+//            let transform = Transform(pitch: 0, yaw: .pi/8, roll: 0)
+//            model.move(to: transform, relativeTo: model, duration: 4, timingFunction: .easeInOut)
+//        }
+//    }
+//    
+//    func turnRigth() {
+//       printMessage("Поворот влево", isPrint: isPrint)
+//       arView.getPartEntity(entity?.nameID, part: "part0") { model in
+//           guard let model = model else { return }
+//           let transform = Transform(pitch: 0, yaw: -.pi/8, roll: 0)
+//           model.move(to: transform, relativeTo: model, duration: 4, timingFunction: .easeInOut)
+//       }
+//      
+//   }
+    
+//    let moveDown = SCNAction.move(by: SCNVector3(0, -0.1, 0), duration: 1)
+//           let moveUp = SCNAction.move(by: SCNVector3(0,0.1,0), duration: 1)
+//           let waitAction = SCNAction.wait(duration: 0.25)
+//           let hoverSequence = SCNAction.sequence([moveUp,waitAction,moveDown])
+//           let loopSequence = SCNAction.repeatForever(hoverSequence)
+//           node2Animate.runAction(loopSequence)
+//
+//           self.sceneView.scene.rootNode.addChildNode(node2Animate)
     
     private func changeStatusAPP() {
         printMessage("Статус приложения \(statusAPP)", isPrint: isPrint)
@@ -93,30 +208,6 @@ final class ARViewModel: ObservableObject {
         initObserverRaycast(true)
     }
     
-    /// Инициализатор обзервера луча
-    private func initObserverRaycast(_ isCheck: Bool) {
-        printMessage("Запус обзервера с проверкой наличия сцены \(isCheck)", isPrint: isPrint)
-        sceneObserver = arView.scene.subscribe(to: SceneEvents.Update.self, {(event) in self.checkPlace(isCheck) })
-    }
-    
-    private func startObserverScene() {
-        initSceneObserver(isInit: true, note: "Проверка сцены корректная Запуск подвижной точки")
-    }
-    
-   
-    
-    private func initSceneObserver(isInit: Bool, note: String) {
-        if isInit {
-            printMessage("Инициализация SceneObserver: \(note)")
-            arView.enableMovePoint(true)
-            sceneObserver = arView.scene.subscribe(to: SceneEvents.Update.self, { [self] (event) in arView.movePoint() })
-        } else {
-            printMessage("Отключение Observers: \(note)")
-            arView.enableMovePoint(false)
-            sceneObserver?.cancel()
-        }
-    }
-    
     /// проверка наличия сцены
     private func checkPlace(_ isCheck: Bool) {
         let simd = arView.getRaycast(midPoint)
@@ -150,15 +241,19 @@ final class ARViewModel: ObservableObject {
         }
     }
     
+    /// установка модели на плоскость
     private func pressAddEntity()  {
         guard let selectedModel = self.selectedModel, let modelEntity = selectedModel.modelEntity else { return }
         entity = ModelProperties(product: selectedModel.card)
         arView.placeEntity(modelEntity, entity, simd: arView.getRaycast(midPoint) ) { properties in
             self.entity = properties
+            self.statusAPP = .useModel
             self.initSceneObserver(isInit: false, note: "placeEntity")
         }
     }
     
+    /// загрузка файлов и создание модели
+    /// - Parameter completion: системное сообщение
     private func loadModelEntity(completion: @escaping (ErrorMessage) -> Void ) async  {
         guard let model = selectedModel else { return completion(.error("модель не определена")) }
         model.asyncLoadModelEntity(shader: self.surfaceShader) { message in
@@ -171,8 +266,8 @@ final class ARViewModel: ObservableObject {
             }
         }
     }
-
     
+    /// инициализация модели из карточки продукта
     private func createdModel() {
         guard let product = product, product.typeModel == "entity" else { return }
         let model = Model(card: product)
@@ -181,8 +276,9 @@ final class ARViewModel: ObservableObject {
             self.statusAPP = .finishCreatedModel
         }
     }
-
     
+    /// загрузка карточки продукта
+    /// - Parameter idCard: идентификатор карточки продукта из БД
     private func loadProdactCard(idCard: String) {
         ProductDataManager.shared.loadCard(to: idProduct) { card in
             self.product = card
@@ -201,7 +297,6 @@ final class ARViewModel: ObservableObject {
         surfaceShader = CustomMaterial.SurfaceShader(named: "DissolveSurfaceShader", in: library)
         printMessage("Библиотека Metal инициализирована")
     }
-    
     
     /// конфигурируем со сбросом всех заранее найденных плоскостей и с определением горизонтальной плоскости
     private func configureResetTracking() {
@@ -229,4 +324,30 @@ final class ARViewModel: ObservableObject {
         coachingOverlay.activatesAutomatically = false
     }
     
+    /// Инициализатор обзервера луча
+    private func initObserverRaycast(_ isCheck: Bool) {
+        printMessage("Запус обзервера с проверкой наличия сцены \(isCheck)", isPrint: isPrint)
+        sceneObserver = arView.scene.subscribe(to: SceneEvents.Update.self, {(event) in self.checkPlace(isCheck) })
+    }
+    
+    /// Включение обзервера с подижной точкой
+    private func startObserverScene() {
+        initSceneObserver(isInit: true, note: "Проверка сцены корректная Запуск подвижной точки")
+    }
+    
+    /// управление работой обзервера
+    /// - Parameters:
+    ///   - isInit: true включение обзервера
+    ///   - note: системное сообщение для печати
+    private func initSceneObserver(isInit: Bool, note: String) {
+        if isInit {
+            printMessage("Инициализация SceneObserver: \(note)")
+            arView.enableMovePoint(true)
+            sceneObserver = arView.scene.subscribe(to: SceneEvents.Update.self, { [self] (event) in arView.movePoint() })
+        } else {
+            printMessage("Отключение Observers: \(note)")
+            arView.enableMovePoint(false)
+            sceneObserver?.cancel()
+        }
+    }
 }

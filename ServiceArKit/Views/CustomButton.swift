@@ -2,30 +2,35 @@
 //  CustomButton.swift
 //  AdminServiceAR
 //
-//  Created by Александр Панин on 19.02.2023.
+//  Created by Александр Панин on 20.11.2024.
 //
 
 import SwiftUI
 
 struct CustomButton: View {
-    
+    @EnvironmentObject var constants: ConstantSetting
     let text: String
     let color: Color
+    let background: Color
     let width: CGFloat
-    let height: CGFloat
     let action: () -> Void
-    private var font: Font { iPad ? fontS : fontSm }
+    private var font: Font { constants.isSmall ? fontS : fontN }
+    private var paddingTextButtonTop: CGFloat { constants.view.height * 0.016 }
+    private var paddingTextButtonLeading: CGFloat { constants.view.width * 0.016 }
     var body: some View {
         Button {
             action()
         } label: {
-            
-            RoundedRectangle(cornerRadius: corner).foregroundColor(color.opacity(0.1)).frame(width: width, height: height)
-                .background(RoundedRectangle(cornerRadius:  corner).stroke(color, lineWidth: 1))
-                .overlay(
-                    Text(text).font(font).foregroundColor(color).lineLimit(2).minimumScaleFactor(scale).padding(.all, sx)
-                        .multilineTextAlignment(.center)
-                )
+            Text(text)
+                .font(font)
+                .lineLimit(1)
+                .minimumScaleFactor(scale)
+                .foregroundColor(color)
+                .padding(.vertical, paddingTextButtonTop)
+                .padding(.horizontal, paddingTextButtonLeading)
+                .frame(width: width)
+                .background( background.cornerRadius(constants.corner))
         }
     }
 }
+
