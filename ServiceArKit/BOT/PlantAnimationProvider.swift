@@ -7,7 +7,7 @@ Loads and provides access to plant animations.
 
 import Foundation
 import RealityKit
-import BOTanistAssets
+// import BOTanistAssets
 import SwiftUI
 import Spatial
 

@@ -12,13 +12,28 @@ import MetalKit
 import Combine
 
 final class ARViewModel: ObservableObject {
-    enum AxisModel {
-        case x, y, z
+    /// Статусы работы приложения
+    enum StatusAPP {
+        case loadView             // запуск приложения
+        case configure            // стартовая конфигурация
+        case finishConfig         // завершение конфигурации
+        case loadCard             // загрузка продуктовой карточки
+        case createdModel         // создание модели
+        case finishCreatedModel   // окончание создания модели
+        case loadModel            // загрузка файлов модели
+        case finishLoadModel      // окончание загрузки файлов модели
+        case searchScene          // поиск плоскости
+        case checkScene           // проверка сцены
+        case observerScene        // наблюдение за сценой
+        case addModel             // установить модель
+        case useModel             // использование модели
     }
+    /// оси поворота
+    enum AxisModel { case x, y, z }
     
-    
+    /// Составные части модели человека
     enum PartModel: String, CaseIterable {
-        enum Parts { case head, body, leftHand, rightHand, leftFoot, rightFoot }
+        enum Parts { case head, body, leftHand, rightHand, leftFoot, rightFoot } // для составление групп частей модели
         case model = ""                   // для опознования основной модели
         case shoulder = "part17"          //part17- волосы
         case head = "part0"               //part0 - голова
@@ -43,59 +58,41 @@ final class ARViewModel: ObservableObject {
         
         func parts(_ parts: Parts ) -> [PartModel] {
             switch parts {
-            case .head: return [.head, .eyes, .shoulder]
-            case .body: return [.neck, .body, .pelpus]
-            case .leftHand: return [.leftShoulder, .leftForearm, .leftHand]
-            case .rightHand: return [.rightShoulder, .rightForearm, .rightHand]
-            case .leftFoot: return [.leftThigh, .leftShin, .leftFoot]
-            case .rightFoot: return [.rightThigh, .rightShin, .rightFoot]
+            case .head: return [.head, .eyes, .shoulder]                             // голова
+            case .body: return [.neck, .body, .pelpus]                               // тело
+            case .leftHand: return [.leftShoulder, .leftForearm, .leftHand]          // левая рука
+            case .rightHand: return [.rightShoulder, .rightForearm, .rightHand]      // правая рука
+            case .leftFoot: return [.leftThigh, .leftShin, .leftFoot]                // левая нога
+            case .rightFoot: return [.rightThigh, .rightShin, .rightFoot]            // правая нога
             }
         }
     }
     
-    /// Статусы работы приложения
-    enum StatusAPP {
-        case loadView             // запуск приложения
-        case configure            // стартовая конфигурация
-        case finishConfig         // завершение конфигурации
-        case loadCard             // загрузка продуктовой карточки
-        case createdModel         // создание модели
-        case finishCreatedModel   // окончание создания модели
-        case loadModel            // загрузка файлов модели
-        case finishLoadModel      // окончание загрузки файлов модели
-        case searchScene          // поиск плоскости
-        case checkScene           // проверка сцены
-        case observerScene        // наблюдение за сценой
-        case addModel             // установить модель
-        case useModel             // использование модели
-    }
-    
-    enum Movement {
-        case no, move, rotateLeft, rotateRigth, scale
-    }
+    /// Типы движений
+    enum Movement { case no, move, rotateLeft, rotateRigth, scale }
     
     struct SimdPart {
         let part: PartModel
         let position: SIMD3<Float>
     }
     
-    let parts = PartModel.model
-    
-    @Published var arView: ARView!                                                           // основное вью
-    @Published var statusAPP: StatusAPP = .loadView { didSet { changeStatusAPP() }}          // статус работы приложения
-    @Published var movementModel: Movement = .no { didSet { changeMovementModel(parts.parts(.head)) } }
     
     
+    @Published var arView: ARView!                                                                      // основное вью
+    @Published var statusAPP: StatusAPP = .loadView { didSet { changeStatusAPP() }}                     // статус работы приложения
+    @Published var movementModel: Movement = .no { didSet { changeMovementModel(parts.parts(.head)) } } // отработка движения
+        
+    private var parts = PartModel.model                             // для выбора набора частей модели
+    private var product: Product?                                   // продуктовая карточка
+    private var entity: ModelProperties?                            // свойста 3Д модели
+    private var selectedModel: Model?                               // выбранная и уже загруженная модель из каталога
+    private var sceneObserver: Cancellable?                         // управление включением и выключением обзервера
+    private var device: MTLDevice?                                  // для инициализации metal
+    private var library: MTLLibrary?                                // библиотека для metal
+    private var surfaceShader: CustomMaterial.SurfaceShader?        // поверхностный шрейдер для Metall
+    private let coachingOverlay = ARCoachingOverlayView()           // управление поиском плоскостей
+    private let isPrint: Bool = true                                // признак печати уведомлений
     
-    var product: Product?                                   // продуктовая карточка
-    var entity: ModelProperties?                            // свойста 3Д модели
-    var selectedModel: Model?                               // выбранная и уже загруженная модель из каталога
-    var sceneObserver: Cancellable?                         // управление включением и выключением обзервера
-    var device: MTLDevice?                                  // для инициализации metal
-    var library: MTLLibrary?                                // библиотека для metal
-    var surfaceShader: CustomMaterial.SurfaceShader?        // поверхностный шрейдер для Metall
-    private let coachingOverlay = ARCoachingOverlayView()   // управление поиском плоскостей
-    private let isPrint: Bool = true                        // признак печати уведомлений
     // вспомогательные модели
     private let point: ModelEntity = CreatorTypicalModels.shared.createdMovePoint(size: 0.05, color: .yellow)
     private let scene: ModelEntity = CreatorTypicalModels.shared.createdPlane(size: CGSize(width: 10, height: 10),
@@ -107,6 +104,8 @@ final class ARViewModel: ObservableObject {
         configure()
     }
     
+    /// Отработка типа движения
+    /// - Parameter parts: массив составных частей модели для перемещения
     func changeMovementModel(_ parts: [PartModel]) {
         switch movementModel {
         case .no:
@@ -125,7 +124,7 @@ final class ARViewModel: ObservableObject {
     
    private func rotationModel(axis: AxisModel, value: Float, duration: TimeInterval, parts: [PartModel]) {
         guard !parts.isEmpty else { return }
-        let models = parts.map { $0.rawValue }
+        let models = parts.map { $0.part }
         let transform = Transform(pitch: axis == .x ? value : 0,
                                   yaw: axis == .y ? value : 0,
                                   roll: axis == .z ? value : 0)
@@ -168,6 +167,7 @@ final class ARViewModel: ObservableObject {
 //
 //           self.sceneView.scene.rootNode.addChildNode(node2Animate)
     
+    /// Отработка этапов приложения
     private func changeStatusAPP() {
         printMessage("Статус приложения \(statusAPP)", isPrint: isPrint)
         switch statusAPP {

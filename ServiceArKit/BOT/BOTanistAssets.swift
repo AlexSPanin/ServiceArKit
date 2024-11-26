@@ -8,4 +8,4 @@ Constants for the asset pacage..
 import Foundation
 
 /// Bundle for the BOTanistAssets project
-public let BOTanistAssetsBundle = Bundle.module
+public let BOTanistAssetsBundle = Bundle.main
