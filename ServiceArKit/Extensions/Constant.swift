@@ -10,6 +10,9 @@ import SwiftUI
 let small: CGFloat = 350                                                // критерий малого экрана
 let base: CGSize = CGSize(width: 300, height: 500)                      // критерии масштаба к малому экрану
 
+
+
+
 let scaleScreen = UIScreen.main.scale                                   // масштаб экрана устройства
 let native = UIScreen.main.nativeScale                                  // реальный масштаб экрана устройства
 let bounds = UIScreen.main.bounds

@@ -10,6 +10,7 @@ import RealityKit
 import ARKit
 import MetalKit
 import Combine
+import Spatial
 
 final class ARViewModel: ObservableObject {
     /// Статусы работы приложения
@@ -81,6 +82,9 @@ final class ARViewModel: ObservableObject {
     @Published var arView: ARView!                                                                      // основное вью
     @Published var statusAPP: StatusAPP = .loadView { didSet { changeStatusAPP() }}                     // статус работы приложения
     @Published var movementModel: Movement = .no { didSet { changeMovementModel(parts.parts(.head)) } } // отработка движения
+    
+    /// The parent entity for the exploration environment.
+    var explorationEnvironment: ModelEntity? = nil
         
     private var parts = PartModel.model                             // для выбора набора частей модели
     private var product: Product?                                   // продуктовая карточка
@@ -93,6 +97,8 @@ final class ARViewModel: ObservableObject {
     private let coachingOverlay = ARCoachingOverlayView()           // управление поиском плоскостей
     private let isPrint: Bool = true                                // признак печати уведомлений
     
+    private let flouvers: Bool = true
+    
     // вспомогательные модели
     private let point: ModelEntity = CreatorTypicalModels.shared.createdMovePoint(size: 0.05, color: .yellow)
     private let scene: ModelEntity = CreatorTypicalModels.shared.createdPlane(size: CGSize(width: 10, height: 10),
@@ -104,9 +110,33 @@ final class ARViewModel: ObservableObject {
         configure()
     }
     
+    /// Prepares the app to transition from the creation phase to the exploration phase.
+    public func prepareForExploration() {
+        do {
+            // Load the environment entity and set the blendshape weight mapping for each entity with a BlendShapeWeightsComponent.
+ //           let map = try Entity.load(named: "BOT/scenes/volume", in: BOTanistAssetsBundle)
+            let map = try Entity.load(named: "volume.usda")
+            
+            map.forEachDescendant(withComponent: BlendShapeWeightsComponent.self) { entity, component in
+                guard let modelComponent = entity.modelComponent else { fatalError("Entity must be model entity. No ModelComponent found.") }
+                let meshResource = modelComponent.mesh
+                let blendShapeWeightsMapping = BlendShapeWeightsMapping(meshResource: meshResource)
+                var blendComponent = BlendShapeWeightsComponent(weightsMapping: blendShapeWeightsMapping)
+                blendComponent.weightSet[0].weights = BlendShapeWeights([0, 1, 0, 0, 0, 0, 0])
+                entity.components.set(blendComponent)
+                let model = ModelEntity()
+                model.addChild(entity)
+                explorationEnvironment = model
+                statusAPP = .finishCreatedModel
+            }
+        } catch {
+            fatalError("Error loading map: \(error.localizedDescription)")
+        }
+    }
+    
     /// Отработка типа движения
     /// - Parameter parts: массив составных частей модели для перемещения
-    func changeMovementModel(_ parts: [PartModel]) {
+    private func changeMovementModel(_ parts: [PartModel]) {
         switch movementModel {
         case .no:
             do {}
@@ -119,7 +149,6 @@ final class ARViewModel: ObservableObject {
         case .scale:
             do {}
         }
-        
     }
     
    private func rotationModel(axis: AxisModel, value: Float, duration: TimeInterval, parts: [PartModel]) {
@@ -136,37 +165,7 @@ final class ARViewModel: ObservableObject {
         }
     }
     
-//    
-//    
-//    
-//     func turnLeft() {
-//        printMessage("Поворот влево", isPrint: isPrint)
-//        arView.getPartEntity(entity?.nameID, part: "part0") { model in
-//            guard let model = model else { return }
-//            let transform = Transform(pitch: 0, yaw: .pi/8, roll: 0)
-//            model.move(to: transform, relativeTo: model, duration: 4, timingFunction: .easeInOut)
-//        }
-//    }
-//    
-//    func turnRigth() {
-//       printMessage("Поворот влево", isPrint: isPrint)
-//       arView.getPartEntity(entity?.nameID, part: "part0") { model in
-//           guard let model = model else { return }
-//           let transform = Transform(pitch: 0, yaw: -.pi/8, roll: 0)
-//           model.move(to: transform, relativeTo: model, duration: 4, timingFunction: .easeInOut)
-//       }
-//      
-//   }
-    
-//    let moveDown = SCNAction.move(by: SCNVector3(0, -0.1, 0), duration: 1)
-//           let moveUp = SCNAction.move(by: SCNVector3(0,0.1,0), duration: 1)
-//           let waitAction = SCNAction.wait(duration: 0.25)
-//           let hoverSequence = SCNAction.sequence([moveUp,waitAction,moveDown])
-//           let loopSequence = SCNAction.repeatForever(hoverSequence)
-//           node2Animate.runAction(loopSequence)
-//
-//           self.sceneView.scene.rootNode.addChildNode(node2Animate)
-    
+
     /// Отработка этапов приложения
     private func changeStatusAPP() {
         printMessage("Статус приложения \(statusAPP)", isPrint: isPrint)
@@ -175,17 +174,18 @@ final class ARViewModel: ObservableObject {
         case .createdModel: createdModel()
         case .finishCreatedModel: statusAPP = .loadModel
         case .loadModel:
-            Task {
-                await loadModelEntity { message in
-                    printMessage(message.message, isPrint: self.isPrint)
-                    switch message {
-                    case .error(_):
-                        self.statusAPP = .createdModel
-                    default:
-                        self.statusAPP = .finishLoadModel
+            guard !flouvers else { return self.statusAPP = .finishLoadModel }
+                Task {
+                    await loadModelEntity { message in
+                        printMessage(message.message, isPrint: self.isPrint)
+                        switch message {
+                        case .error(_):
+                            self.statusAPP = .createdModel
+                        default:
+                            self.statusAPP = .finishLoadModel
+                        }
                     }
                 }
-            }
         case .finishLoadModel: statusAPP = .searchScene
         case .searchScene:  configureResetTracking()        // запуск поиска сцены
         case .checkScene: initObserverRaycast(true)
@@ -195,18 +195,7 @@ final class ARViewModel: ObservableObject {
         }
     }
     
-    /// конфигурируем с определением горизонтальной плоскости
-    private func configure() {
-        printMessage("Начало конфигурации", isPrint: isPrint)
-        AuthUserManager.shared.registerAnon { _ in }
-        FileAppManager.shared.clearLocal(fileDirectory)
-        guard Permissions.shared.checkPermissions(type: .video) else { return }
-        statusAPP = .configure
-        printMessage("Начало конфигурации плоскости работы")
-        arView.configureResetTracking()
-        addCoachingOverlay(true)
-        initObserverRaycast(true)
-    }
+    
     
     /// проверка наличия сцены
     private func checkPlace(_ isCheck: Bool) {
@@ -243,12 +232,21 @@ final class ARViewModel: ObservableObject {
     
     /// установка модели на плоскость
     private func pressAddEntity()  {
-        guard let selectedModel = self.selectedModel, let modelEntity = selectedModel.modelEntity else { return }
-        entity = ModelProperties(product: selectedModel.card)
-        arView.placeEntity(modelEntity, entity, simd: arView.getRaycast(midPoint) ) { properties in
-            self.entity = properties
-            self.statusAPP = .useModel
-            self.initSceneObserver(isInit: false, note: "placeEntity")
+        if flouvers {
+            guard let modelEntity = explorationEnvironment else { return }
+            arView.placeEntity(modelEntity, entity, simd: arView.getRaycast(midPoint) ) { properties in
+                self.entity = properties
+                self.statusAPP = .useModel
+                self.initSceneObserver(isInit: false, note: "placeEntity")
+            }
+        } else {
+            guard let selectedModel = self.selectedModel, let modelEntity = selectedModel.modelEntity else { return }
+            entity = ModelProperties(product: selectedModel.card)
+            arView.placeEntity(modelEntity, entity, simd: arView.getRaycast(midPoint) ) { properties in
+                self.entity = properties
+                self.statusAPP = .useModel
+                self.initSceneObserver(isInit: false, note: "placeEntity")
+            }
         }
     }
     
@@ -269,11 +267,15 @@ final class ARViewModel: ObservableObject {
     
     /// инициализация модели из карточки продукта
     private func createdModel() {
+        if flouvers {
+            prepareForExploration()
+        } else {
         guard let product = product, product.typeModel == "entity" else { return }
         let model = Model(card: product)
-        model.initModel { model in
-            self.selectedModel = model
-            self.statusAPP = .finishCreatedModel
+            model.initModel { model in
+                self.selectedModel = model
+                self.statusAPP = .finishCreatedModel
+            }
         }
     }
     
@@ -284,6 +286,19 @@ final class ARViewModel: ObservableObject {
             self.product = card
             self.statusAPP = .createdModel
         }
+    }
+    
+    /// конфигурируем с определением горизонтальной плоскости
+    private func configure() {
+        printMessage("Начало конфигурации", isPrint: isPrint)
+        AuthUserManager.shared.registerAnon { _ in }
+        FileAppManager.shared.clearLocal(fileDirectory)
+        guard Permissions.shared.checkPermissions(type: .video) else { return }
+        statusAPP = .configure
+        printMessage("Начало конфигурации плоскости работы")
+        arView.configureResetTracking()
+        addCoachingOverlay(true)
+        initObserverRaycast(true)
     }
     
     /// Инициализация библиотеки metal
