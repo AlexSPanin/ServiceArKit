@@ -106,19 +106,42 @@ final class ARViewModel: ObservableObject {
     init() {
         printMessage("Инициализация ARViewModel", isPrint: isPrint)
         arView = ARView(frame: .zero)
+        checkFile()
         initializeMetal()
         configure()
     }
     
+    private func checkFile() {
+        let file = "volume.usda"
+//        let bundelPath = Bundle.main.bundleURL
+//        do {
+//            let urls = try FileManager.default.contentsOfDirectory(at: bundelPath, includingPropertiesForKeys: nil)
+//            urls.forEach { url in
+//                let path = url.path
+//                printMessage(path)
+//            }
+//        } catch {
+//            fatalError("Error: Failed to locate \(file) in bundle.")
+//        }
+        
+        guard let path = Bundle.main.path(forResource: file, ofType: nil) else { fatalError("Error: Failed to locate \(file) in bundle.") }
+        if FileManager.default.fileExists(atPath: path) {
+            printMessage("Файл найден \(file)", isPrint: isPrint)
+        } else {
+            printMessage("Файл не найден \(file)", isPrint: isPrint)
+        }
+    }
     /// Prepares the app to transition from the creation phase to the exploration phase.
     public func prepareForExploration() {
+        printMessage("Начало подготовки для эксплорации")
         do {
             // Load the environment entity and set the blendshape weight mapping for each entity with a BlendShapeWeightsComponent.
- //           let map = try Entity.load(named: "BOT/scenes/volume", in: BOTanistAssetsBundle)
-            let map = try Entity.load(named: "volume.usda")
             
+            let map = try Entity.load(named: "volume.usda", in: Bundle.main)
+            printMessage("Загружено Entity: \(map.name)")
             map.forEachDescendant(withComponent: BlendShapeWeightsComponent.self) { entity, component in
                 guard let modelComponent = entity.modelComponent else { fatalError("Entity must be model entity. No ModelComponent found.") }
+                printMessage("Найдено Entity: \(entity.name)")
                 let meshResource = modelComponent.mesh
                 let blendShapeWeightsMapping = BlendShapeWeightsMapping(meshResource: meshResource)
                 var blendComponent = BlendShapeWeightsComponent(weightsMapping: blendShapeWeightsMapping)

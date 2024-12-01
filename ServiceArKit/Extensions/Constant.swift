@@ -11,7 +11,7 @@ let small: CGFloat = 350                                                // кр�
 let base: CGSize = CGSize(width: 300, height: 500)                      // критерии масштаба к малому экрану
 
 
-
+let bundelAPP = Bundle.main
 
 let scaleScreen = UIScreen.main.scale                                   // масштаб экрана устройства
 let native = UIScreen.main.nativeScale                                  // реальный масштаб экрана устройства

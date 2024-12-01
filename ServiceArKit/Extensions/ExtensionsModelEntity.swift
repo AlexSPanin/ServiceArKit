@@ -16,6 +16,12 @@ import Metal
 
 // MARK: - расширения для ModelEntity
 extension ModelEntity {
+    func getJointIndex(suffix: String) -> Int? {
+        return jointNames
+            .enumerated()
+            .first(where: { $0.element.hasSuffix(suffix) })?
+            .offset
+    }
 
 //    /// изменение прозрачности слоя
 //    /// - Parameters:

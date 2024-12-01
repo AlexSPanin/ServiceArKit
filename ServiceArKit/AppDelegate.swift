@@ -5,11 +5,10 @@
 //  Created by Александр Панин on 02.10.2024.
 //
 
-import UIKit
 import SwiftUI
-import Metal
 import FirebaseCore
 import Spatial
+import OSLog
 
 
 
@@ -58,7 +57,7 @@ struct ServiceArKit: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject var activ = AppState()
     @StateObject var constantSetting = ConstantSetting()
-
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -77,6 +76,14 @@ struct ServiceArKit: App {
                 }
         }
     }
+    
+    init() {
+        PlantComponent.registerComponent()
+        JointPinComponent.registerComponent()
+        JointPinSystem.registerSystem()
+       
+    }
+
 }
 
 

@@ -42,12 +42,10 @@ class PlantAnimationProvider: Sendable {
     
     /// Loads the grow animation for the given plant type.
     private func generateGrowAnimationResource(for plantType: PlantComponent.PlantTypeKey) async -> AnimationResource {
- //       let sceneName = "BOT/Assets/plants/animations/\(plantType.rawValue)_grow_anim"
         let sceneName = "\(plantType.rawValue)_grow_anim.usdz"
         var ret: AnimationResource? = nil
         do {
-    //        let rootEntity = try await Entity(named: sceneName, in: BOTanistAssetsBundle)
-            let rootEntity = try await Entity(named: sceneName)
+            let rootEntity = try await Entity(named: sceneName, in: Bundle.main)
             rootEntity.forEachDescendant(withComponent: BlendShapeWeightsComponent.self) { entity, component in
                 if let index = entity.animationLibraryComponent?.animations.startIndex {
                     ret = entity.animationLibraryComponent?.animations[index].value
@@ -62,12 +60,10 @@ class PlantAnimationProvider: Sendable {
     
     /// Loads the celebration animation for the given plant type.
     private func generateCelebrateAnimationResource(for plantType: PlantComponent.PlantTypeKey) async -> AnimationResource {
- //       let sceneName = "BOT/Assets/plants/animations/\(plantType.rawValue)_celebrate_anim"
-        let sceneName = "\(plantType.rawValue)_celebrate_anim.usdz"
+       let sceneName = "\(plantType.rawValue)_celebrate_anim.usdz"
         var ret: AnimationResource? = nil
         do {
-//            let rootEntity = try await Entity(named: sceneName, in: BOTanistAssetsBundle)
-            let rootEntity = try await Entity(named: sceneName)
+            let rootEntity = try await Entity(named: sceneName, in: Bundle.main)
              rootEntity.forEachDescendant(withComponent: BlendShapeWeightsComponent.self) { entity, component in
                  ret = entity.animationLibraryComponent?.defaultAnimation
              }

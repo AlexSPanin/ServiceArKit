@@ -5,23 +5,20 @@ Abstract:
 A component that marks an entity as a plant.
 */
 
-import Foundation
 import RealityKit
+import Foundation
+import SwiftUI
 
 public extension Entity {
+    
+    var jointPinComponent: JointPinComponent? {
+        get { components[JointPinComponent.self] }
+        set { components[JointPinComponent.self] = newValue }
+    }
+    
     var plantComponent: PlantComponent? {
         get { components[PlantComponent.self] }
         set { components[PlantComponent.self] = newValue }
-    }
-    
-    /// Recursive search of children looking for any descendants with a specific component and calling a closure with them.
-    func forEachDescendant<T: Component>(withComponent componentClass: T.Type, _ closure: (Entity, T) -> Void) {
-        for child in children {
-            if let component = child.components[componentClass] {
-                closure(child, component)
-            }
-            child.forEachDescendant(withComponent: componentClass, closure)
-        }
     }
     
     var modelComponent: ModelComponent? {
@@ -32,5 +29,15 @@ public extension Entity {
     var animationLibraryComponent: AnimationLibraryComponent? {
         get { components[AnimationLibraryComponent.self] }
         set { components[AnimationLibraryComponent.self] = newValue }
+    }
+    
+    /// Recursive search of children looking for any descendants with a specific component and calling a closure with them.
+    func forEachDescendant<T: Component>(withComponent componentClass: T.Type, _ closure: (Entity, T) -> Void) {
+        for child in children {
+            if let component = child.components[componentClass] {
+                closure(child, component)
+            }
+            child.forEachDescendant(withComponent: componentClass, closure)
+        }
     }
 }

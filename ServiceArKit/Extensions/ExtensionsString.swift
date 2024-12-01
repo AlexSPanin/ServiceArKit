@@ -125,5 +125,9 @@ extension String {
         return result
     }
     
+    func capitalizedFirst() -> String {
+        return "\(prefix(1).capitalized)\(dropFirst())"
+    }
+    
 }
 

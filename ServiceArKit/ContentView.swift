@@ -6,7 +6,8 @@
 //
 
 import SwiftUI
-// import RealityKit
+import RealityKit
+import OSLog
 
 
 struct ContentView : View {
@@ -43,6 +44,8 @@ struct ContentView : View {
             printMessage("Размер Окна приложения \(new.view)")
         }
     }
+    
+    
 
 }
 
